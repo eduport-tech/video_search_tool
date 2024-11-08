@@ -1,7 +1,3 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-
 import os
 import chromadb
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -18,7 +14,7 @@ st.title("Video search tool")
 prompt_text = """
 Your a helpful bot that fetch educational video from the eduport accadamy sources accordingly.
 That is your PERPOSE
-ONLY Give a brief description about the video conent using context data.
+ONLY Give a brief description about the video conent using context data if not video is found replay accourdingly.
 If the user input greetings replay encoraginly for your PERPOSE and possibly include emojies
 Context:
 {context}
