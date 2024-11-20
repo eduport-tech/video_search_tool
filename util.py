@@ -120,10 +120,13 @@ def search_for_timestamp(full_timestamp_data):
 #   print(generated_content, link, context, "--------generated content--------")
 #   return generated_content, link
   
-def generate_response(question="what is Boltzmann constant??"):
+def generate_response(question):
   generated_content, link, context = None, None, None
-  context = cloude_embd_col.query(query_texts=question, n_results=3)
+  context = cloude_embd_col.query(query_texts=question, n_results=1)
   processed_data = search_for_timestamp(context)
-  context, link = generate_context_response(processed_data, question)
+  if processed_data:
+    context = generate_vide_data(processed_data[0])
+    link = generate_youtube_link(processed_data[0])
+  # context, link = generate_context_response(processed_data, question)
   generated_content = main_chat_chain.invoke({"context": context, "question": question})
   return generated_content, link

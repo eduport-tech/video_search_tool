@@ -4,7 +4,9 @@ from core_llms import llm
 from util import generate_response
 from trasncription import generate_transcription_data
 
-st.title("Video search tool")
+st.title("PHY Video Help Bot 📹")
+st.text("I'm a helpful bot which helps you to find videos in the system.")
+st.text("Currently I only support Neet Physics videos.")
 
 question = st.chat_input("Say something")
 audio_value = st.audio_input("Record a voice message")
