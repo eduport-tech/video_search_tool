@@ -69,17 +69,19 @@ def get_main_video_data(context):
   return url_tag, video_name, content
 
 def search_for_timestamp(full_timestamp_data):
-  full_documents_data = full_timestamp_data['documents'][0]
+  similarity_distance = full_timestamp_data['distances'][0][0]
   matched_data = []
-  for ind, ques in enumerate(full_documents_data):
-    processed_data = {
-      "url": full_timestamp_data['metadatas'][0][ind]['url'],
-      "video_name": full_timestamp_data['metadatas'][0][ind]['video_name'],
-      "content": ques,
-      "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
-      "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
-    }
-    matched_data.append(processed_data)
+  if similarity_distance <= 0.7:
+    full_documents_data = full_timestamp_data['documents'][0]
+    for ind, ques in enumerate(full_documents_data):
+      processed_data = {
+        "url": full_timestamp_data['metadatas'][0][ind]['url'],
+        "video_name": full_timestamp_data['metadatas'][0][ind]['video_name'],
+        "content": ques,
+        "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
+        "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
+      }
+      matched_data.append(processed_data)
   return matched_data
 
 # def generate_response(question):
@@ -127,6 +129,9 @@ def generate_response(question):
   if processed_data:
     context = generate_vide_data(processed_data[0])
     link = generate_youtube_link(processed_data[0])
+  else:
+    context = "Can't find the video for the question"
+    link = None
   # context, link = generate_context_response(processed_data, question)
   generated_content = main_chat_chain.invoke({"context": context, "question": question})
   return generated_content, link

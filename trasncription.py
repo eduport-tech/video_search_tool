@@ -12,7 +12,7 @@ def generate_transcription_data(audio_file):
         prompt,
         {
             "mime_type": "audio/mp3",
-            "data": audio_file.read()
+            "data": audio_file
         }
     ],
     generation_config = genai.GenerationConfig(
