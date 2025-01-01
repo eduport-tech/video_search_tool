@@ -6,13 +6,12 @@ from trasncription import generate_transcription_data
 
 app = FastAPI()
 allowed_orgins = [
-    "http://*.eduport.ai",
+    "*",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allowed_orgins=allowed_orgins,
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
