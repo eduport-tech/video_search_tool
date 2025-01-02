@@ -6,7 +6,7 @@ from trasncription import generate_transcription_data
 
 app = FastAPI()
 allowed_orgins = [
-    "http://*.eduport.ai",
+    "*",
 ]
 
 app.add_middleware(
