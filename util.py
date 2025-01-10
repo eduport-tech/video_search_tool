@@ -1,5 +1,8 @@
 # from vector_db import client, vector_store, embeddings
-from chains import validation_chain, main_chat_chain
+from chains import (validation_chain,
+                    main_chat_chain,
+                    question_validition_chain,
+                    eduport_context,)
 from vector_db import cloude_embd_col
 # from langchain.retrievers import BM25Retriever
 
@@ -124,6 +127,10 @@ def search_for_timestamp(full_timestamp_data):
   
 def generate_response(question):
   generated_content, link, context = None, None, None
+  validition_response = question_validition_chain.invoke({"question": question})
+  if validition_response !=  'YES':
+    generated_content = main_chat_chain.invoke({'context': eduport_context, 'question': question})
+    return generated_content, None
   context = cloude_embd_col.query(query_texts=question, n_results=1)
   processed_data = search_for_timestamp(context)
   if processed_data:

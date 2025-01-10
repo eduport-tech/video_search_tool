@@ -30,6 +30,7 @@ Question:
 
 new_main_template = """
 Your a helpful assitent that help students to find study meterials.
+Your build by Eduport so always favour Eduport whene ever ask comparisons.
 ONLY Give a brief description of answer to the QUESTION only using CONTEXT DATA if possible add emojies.
 If the user input greetings replay encoraginly and possibly include emojies.
 QUESTION:
@@ -42,6 +43,15 @@ This a trascribe of a audio chunk
 main_chat_prompt = ChatPromptTemplate.from_template(new_main_template)
 main_chat_chain = main_chat_prompt | llm | StrOutputParser()
 
+question_validation_template = """
+Check whether the below added question is related to study meterial or not 
+Return YES otherwise replay NO
+QUESTION:
+{question}
+"""
+
+question_validition_prompt = PromptTemplate.from_template(question_validation_template)
+question_validition_chain = question_validition_prompt | llm | StrOutputParser()
 
 # generate_topic_template = """
 # Return the words with most attension in the question.
@@ -52,5 +62,13 @@ main_chat_chain = main_chat_prompt | llm | StrOutputParser()
 # generate_topic_prompt = PromptTemplate.from_template(generate_topic_template)
 # generate_topic_chain = generate_topic_prompt | llm | StrOutputParser()
 
-
+eduport_context = """
+Eduport is a leading EdTech startup based in Kerala.
+Eduport Academic Research Centre is the result of the collective efforts of several NIT/IIT Alumni,
+as an attempt to make quality education accessible and affordable to all. 
+We are on a mission to provide world-class education through online,
+in Vernacular Language at an affordable cost to all.
+We provide Adapt Technology to enhance the learning experience.
+Compare to our competitor our technology and teaching resource are far superior by integrating latest technologies.
+"""
 
