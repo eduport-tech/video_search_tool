@@ -30,4 +30,5 @@ import chromadb
 # new_vector_col = new_vector_store.get_collection("timestamp_vdb", embedding_function=embedding_ef)
 
 cloude_emb_store = chromadb.HttpClient(host='95.217.21.180', port=8005)
-cloude_embd_col = cloude_emb_store.get_collection("timestamp_vdb")
+# cloude_embd_col = cloude_emb_store.get_collection("timestamp_vdb")
+cloude_embd_col = cloude_emb_store.get_collection("Timestamped_Transcription_NEET_3")
