@@ -20,8 +20,8 @@ def generate_youtube_link(context_data):
   # metadata = context_data[0].metadata
   start_time = int(context_data['timestamp_start']) if context_data.get('timestamp_start') else 0
   end_time = int(context_data['timestamp_end']) if context_data.get('timestamp_end') else None
-  url = context_data['youtube_id']
-  video_url = f"{url}&start={start_time}&end={end_time}"
+  url = context_data['url']
+  video_url = f"https://youtu.be/{url}&start={start_time}&end={end_time}"
   return video_url
 
 def generate_vide_data(context_data):
@@ -67,7 +67,7 @@ def generate_context_response(contexts_data, question):
 
 def get_main_video_data(context):
   url_tag = context['metadatas'][0][0]['youtube_id']
-  video_name = context['metadatas'][0][0]['video_name']
+  video_name = context['metadatas'][0][0]['video_title']
   content = context['documents'][0][0]
   return url_tag, video_name, content
 
@@ -79,7 +79,7 @@ def search_for_timestamp(full_timestamp_data):
     for ind, ques in enumerate(full_documents_data):
       processed_data = {
         "url": full_timestamp_data['metadatas'][0][ind]['youtube_id'],
-        "video_name": full_timestamp_data['metadatas'][0][ind]['video_name'],
+        "video_name": full_timestamp_data['metadatas'][0][ind]['video_title'],
         "content": ques,
         "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
         "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
