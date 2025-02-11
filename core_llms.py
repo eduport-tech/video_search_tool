@@ -13,7 +13,7 @@ llama_3 = ChatGroq(
 )
 
 gemini_2 = ChatGoogleGenerativeAI(
-    model="gemini-2.0-pro-exp-02-05",
+    model="gemini-2.0-flash-exp",
     temperature=0,
     max_tokens=None,
     timeout=None,
