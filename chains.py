@@ -1,7 +1,7 @@
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from core_llms import llama_3
+from core_llms import gemini_2_flash_exp, llm
 
 select_context_template = """
 Question: {question}
@@ -14,7 +14,7 @@ Please respond with only the number (1-{num_results}) of the result that is most
 
 # Create the prompt template and chain.
 select_context_prompt = PromptTemplate.from_template(select_context_template)
-select_context_chain = select_context_prompt | llama_3 | StrOutputParser()
+select_context_chain = select_context_prompt | gemini_2_flash_exp | StrOutputParser()
 
 validation_template = """
 Compare the Question and Context and replay whether Context is related to Question answer. If input is in Malayalam, translate to English first and then proceed with the task.
@@ -26,7 +26,7 @@ Context:
 ONLY RETURN "TRUE" OR "FALSE"
 """
 valid_prompt = PromptTemplate.from_template(validation_template)
-validation_chain = valid_prompt | llama_3 | StrOutputParser()
+validation_chain = valid_prompt | llm | StrOutputParser()
 
 main_chat_template = """
 Your a helpful bot that fetch educational video from the eduport academy sources accordingly.
@@ -58,7 +58,7 @@ This a transcription of a audio chunk
 {context}
 """
 main_chat_prompt = PromptTemplate.from_template(new_main_template)
-main_chat_chain = main_chat_prompt | llama_3 | StrOutputParser()
+main_chat_chain = main_chat_prompt | llm | StrOutputParser()
 
 question_validation_template = """
 Check whether the below added question is related to study material or not
@@ -68,7 +68,7 @@ QUESTION:
 """
 
 question_validition_prompt = PromptTemplate.from_template(question_validation_template)
-question_validition_chain = question_validition_prompt | llama_3 | StrOutputParser()
+question_validition_chain = question_validition_prompt | llm | StrOutputParser()
 
 # generate_topic_template = """
 # Return the words with most attension in the question.
@@ -77,7 +77,7 @@ question_validition_chain = question_validition_prompt | llama_3 | StrOutputPars
 # {question}
 # """
 # generate_topic_prompt = PromptTemplate.from_template(generate_topic_template)
-# generate_topic_chain = generate_topic_prompt | llama_3 | StrOutputParser()
+# generate_topic_chain = generate_topic_prompt | llm | StrOutputParser()
 
 eduport_context = """
 Eduport is a leading EdTech startup based in Kerala.
