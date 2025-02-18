@@ -6,12 +6,6 @@ from chains import (main_chat_chain,
 from vector_db import cloude_embd_col
 # from langchain.retrievers import BM25Retriever
 
-# Gemini is now only used for comparing transcriptions.
-from google import genai
-
-# Configure your API key (replace YOUR_API_KEY with your key)
-gemini_client = genai.Client(api_key="AIzaSyBLOv_Q-Ejfrs7b6g3Eg5h3Lr8J55_BsGA")
-
 def select_best_context_via_gemini(results, question):
     """
     Given a list of context results (each a dict with at least 'content', 'url', and 'chapter_name'),
