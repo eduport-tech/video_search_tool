@@ -72,7 +72,6 @@ def search_for_timestamp(full_timestamp_data):
             "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
             "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
         }
-        print(processed_data['chapter_name'])
         matched_data.append(processed_data)
     return matched_data
 
@@ -85,7 +84,7 @@ def generate_response(question):
         return generated_content, None
 
     # Query the top 50 context results from your cloud embeddings.
-    context_results = cloude_embd_col.query(query_texts=question, n_results=50)
+    context_results = cloude_embd_col.query(query_texts=question, n_results=25)
     processed_data = search_for_timestamp(context_results)
     
     if processed_data:
