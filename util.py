@@ -1,144 +1,99 @@
 # from vector_db import client, vector_store, embeddings
-from chains import (validation_chain,
-                    main_chat_chain,
+from chains import (main_chat_chain,
                     question_validition_chain,
-                    eduport_context,)
+                    eduport_context,
+                    select_context_chain)
 from vector_db import cloude_embd_col
 # from langchain.retrievers import BM25Retriever
 
-#print(vector_store.similarity_search("gravitaional field", filter={"timestamp_end": {"$gte": 90}}))
-
-def get_the_correct_context(context_datas, question):
-  for context_data in context_datas:
-    page_content = context_data['content']
-    valid = validation_chain.invoke({"context": page_content, "question": question})
-    if valid == 'TRUE':
-      return context_data
-  return 'FALSE'
+def select_best_context_via_gemini(results, question):
+    """
+    Given a list of context results (each a dict with at least 'content', 'url', and 'chapter_name'),
+    use a LangChain prompt chain (powered by Gemini) to select the most relevant transcription.
+    Returns the chosen result (a dict).
+    """
+    # Format the results into a string.
+    formatted_results = ""
+    for idx, res in enumerate(results):
+        excerpt = res.get('content', '')[:200]  # Use first 200 characters for brevity.
+        chapter_name = res.get('chapter_name', 'Unknown Chapter')
+        formatted_results += f"\nResult {idx+1} (Chapter: {chapter_name}): {excerpt}\n"
+    
+    chain_input = {
+        "question": question,
+        "results": formatted_results,
+        "num_results": len(results)
+    }
+    
+    # Call the Gemini-powered chain for transcription comparison.
+    output = select_context_chain.invoke(chain_input)
+    
+    try:
+        chosen_num = int(output.strip())
+        if 1 <= chosen_num <= len(results):
+            return results[chosen_num - 1]
+        else:
+            return results[0]  # Default to the first result if out of range.
+    except Exception:
+        return results[0]  # Default to the first result if parsing fails.
 
 def generate_youtube_link(context_data):
-  # metadata = context_data[0].metadata
-  start_time = int(context_data['timestamp_start']) if context_data.get('timestamp_start') else 0
-  end_time = int(context_data['timestamp_end']) if context_data.get('timestamp_end') else None
-  url = context_data['url']
-  video_url = f"https://youtu.be/{url}&start={start_time}&end={end_time}"
-  return video_url
+    start_time = int(context_data.get('timestamp_start', 0))
+    end_time = int(context_data.get('timestamp_end', 0)) if context_data.get('timestamp_end') else None
+    url = context_data.get('url', '')
+    video_url = f"https://youtu.be/{url}?start={start_time}"
+    if end_time:
+        video_url += f"&end={end_time}"
+    return video_url
 
 def generate_vide_data(context_data):
-  data = context_data['content']
-  # confidence = context_data[1]
-  return data
+    return context_data.get('content', '')
 
 def generate_context_response(contexts_data, question):
-  correct_context = get_the_correct_context(contexts_data, question)
-  if correct_context != 'FALSE':
-    link = generate_youtube_link(correct_context)
-    video_data = generate_vide_data(correct_context)
-  else:
-    link = None
-    video_data = "Can't find the video for your question."
-  return video_data, link
-
-# def generate_topics(question):
-#   rewrited_question = generate_topic_chain.invoke({"question": question})
-#   return rewrited_question
-
-# def fetch_from_full_text_db(question):
-#   query_result = full_text_collection.query(query_texts=[question], n_results=1)
-#   if query_result:
-#     return query_result
-
-# def fetch_from_timestamp_db(url):
-#   query_result = timestamp_collection.get(where={"url": url})
-#   if query_result:
-#     return query_result
-
-# def generate_response(question):
-#   topic_list = generate_topics(question)
-#   # context_data = vector_store.similarity_search_by_vector(embeddings.embed_query(question), k=5)
-#   # context_data = fetch_from_full_text_db(question)
-#   context_data = fetch_from_full_text_db(question)
-#   context, link = generate_context_response(context_data, question)
-#   if link and topic_list:
-#     context, link = 
-#   generated_content = main_chat_chain.invoke({"context": context, "question": question})
-#   print(generated_content, link, context, "--------generated content--------")
-#   return generated_content, link
-
-def get_main_video_data(context):
-  url_tag = context['metadatas'][0][0]['youtube_id']
-  video_name = context['metadatas'][0][0]['video_title']
-  content = context['documents'][0][0]
-  return url_tag, video_name, content
+    # Use Gemini (via the select_context_chain) to pick the best transcription context.
+    correct_context = select_best_context_via_gemini(contexts_data, question)
+    if correct_context:
+        link = generate_youtube_link(correct_context)
+        video_data = generate_vide_data(correct_context)
+    else:
+        link = None
+        video_data = "Can't find the video for your question."
+    return video_data, link
 
 def search_for_timestamp(full_timestamp_data):
-  similarity_distance = full_timestamp_data['distances'][0][0]
-  matched_data = []
-  if similarity_distance <= 0.7:
+    matched_data = []
     full_documents_data = full_timestamp_data['documents'][0]
     for ind, ques in enumerate(full_documents_data):
-      processed_data = {
-        "url": full_timestamp_data['metadatas'][0][ind]['youtube_id'],
-        "video_name": full_timestamp_data['metadatas'][0][ind]['video_title'],
-        "content": ques,
-        "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
-        "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
-      }
-      matched_data.append(processed_data)
-  return matched_data
+        processed_data = {
+            "url": full_timestamp_data['metadatas'][0][ind]['youtube_id'],
+            "video_name": full_timestamp_data['metadatas'][0][ind]['video_title'],
+            "content": ques,
+            "chapter_name": full_timestamp_data['metadatas'][0][ind]['chapter_name'],
+            "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
+            "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
+        }
+        matched_data.append(processed_data)
+    return matched_data
 
-# def generate_response(question):
-#   generated_content, link, context = None, None, None
-#   topic_list = generate_topics(question)
-#   main_video_context = fetch_from_full_text_db(question)
-#   if main_video_context.get('documents'):
-#     link, video_name, context = get_main_video_data(main_video_context)
-#     if topic_list:
-#       timestamp_context = search_for_timestamp(topic_list, link)
-#       print(timestamp_context)
-#       if timestamp_context:
-#         context, link = generate_context_response(timestamp_context, question)
-#         # print("timestampt data--------", context)
-#     generated_content = main_chat_chain.invoke({"context": context, "question": question})
-#     print(generated_content, link, context, "--------generated content--------")
-#   return generated_content, link
-
-# def get_bm25search(question):
-#   all_text_chunk = vector_store.get()['documents']
-#   keyword_retriever = BM25Retriever.from_texts(all_text_chunk)
-#   keyword_retriever.k =  1
-#   response = keyword_retriever.invoke(question)
-#   return response[0] if response else None
-
-# def generate_response(question):
-#   generated_content, link, context = None, None, None
-#   context = get_bm25search(question)
-#   if not context:
-#     return "Cant find the video", None
-#   context_data = timestamp_collection.get(where_document={"$contains": context.page_content}, limit=1)
-#   # valid = validation_chain.invoke({"context": context_data, "question": question})
-#   # if valid == "FALSE":
-#   #   context, link = "Cant find the video", None
-#   # else:
-#   link = generate_youtube_link(context_data['metadatas'][0])
-#   generated_content = main_chat_chain.invoke({"context": context, "question": question})
-#   print(generated_content, link, context, "--------generated content--------")
-#   return generated_content, link
-  
 def generate_response(question):
-  generated_content, link, context = None, None, None
-  validition_response = question_validition_chain.invoke({"question": question})
-  if validition_response !=  'YES':
-    generated_content = main_chat_chain.invoke({'context': eduport_context, 'question': question})
-    return generated_content, None
-  context = cloude_embd_col.query(query_texts=question, n_results=1)
-  processed_data = search_for_timestamp(context)
-  if processed_data:
-    context = generate_vide_data(processed_data[0])
-    link = generate_youtube_link(processed_data[0])
-  else:
-    context = "Can't find the video for the question"
-    link = None
-  # context, link = generate_context_response(processed_data, question)
-  generated_content = main_chat_chain.invoke({"context": context, "question": question})
-  return generated_content, link
+    generated_content, link = None, None
+    # Use Llama for question validation.
+    validition_response = question_validition_chain.invoke({"question": question})
+    if validition_response != 'YES':
+        generated_content = main_chat_chain.invoke({'context': eduport_context, 'question': question})
+        return generated_content, None
+
+    # Query the top 50 context results from your cloud embeddings.
+    context_results = cloude_embd_col.query(query_texts=question, n_results=25)
+    processed_data = search_for_timestamp(context_results)
+    
+    if processed_data:
+        # Use Gemini only for transcription comparison to select the best context.
+        context, link = generate_context_response(processed_data, question)
+    else:
+        context = "Can't find the video for the question"
+        link = None
+
+    # Use Llama to generate the final answer.
+    generated_content = main_chat_chain.invoke({"context": context, "question": question})
+    return generated_content, link
