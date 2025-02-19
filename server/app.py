@@ -9,14 +9,15 @@ import sentry_sdk
 from server.config import CONFIG
 from server.models.user import UserMessageHistory, Messages
 
-sentry_sdk.init(
-    dsn="https://d1fbd9baf245ed2fd702715b64b3eccd@sentry.eduport.in/14",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for tracing.
-    traces_sample_rate=1.0,
-    send_default_pii=True,
-    profiles_sample_rate=1.0,
-)
+if CONFIG.environment == "PROD":
+    sentry_sdk.init(
+        dsn="https://d1fbd9baf245ed2fd702715b64b3eccd@sentry.eduport.in/14",
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for tracing.
+        traces_sample_rate=1.0,
+        send_default_pii=True,
+        profiles_sample_rate=1.0,
+    )
 
 DESCRIPTION = """
 This API powers the doubts cleare module

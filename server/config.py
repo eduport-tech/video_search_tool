@@ -6,5 +6,6 @@ class Settings(BaseModel):
 
     root_url: str = config("ROOT_URL", default="http://localhost:8000")
     mongo_uri: str = config("MONGODB_URL")
+    environment: str = config("ENVIRONMENT", default="DEV")
 
 CONFIG = Settings()
