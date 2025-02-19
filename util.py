@@ -17,7 +17,11 @@ def select_best_context_via_gemini(results, question):
     for idx, res in enumerate(results):
         excerpt = res.get('content', '')[:200]  # Use first 200 characters for brevity.
         chapter_name = res.get('chapter_name', 'Unknown Chapter')
-        formatted_results += f"\nResult {idx+1} (Chapter: {chapter_name}): {excerpt}\n"
+        sub_topic = res.get('sub_topic', "Unknown Sub Topic")
+        topic = res.get('topic', "Unknown Topic")
+        subject = res.get('subject', "Unknown Subject")
+        course_name = res.get("course_name", "Unknown Course Name")
+        formatted_results += f"\nResult {idx+1} (Chapter: {chapter_name}, Sub Topic: {sub_topic}, Topic: {topic}, Subject: {subject}, Course Name: {course_name}): {excerpt}\n"
     
     chain_input = {
         "question": question,
@@ -69,6 +73,10 @@ def search_for_timestamp(full_timestamp_data):
             "video_name": full_timestamp_data['metadatas'][0][ind]['video_title'],
             "content": ques,
             "chapter_name": full_timestamp_data['metadatas'][0][ind]['chapter_name'],
+            "sub_topic": full_timestamp_data['metadatas'][0][ind]['sub_topic'],
+            "topic": full_timestamp_data['metadatas'][0][ind]['topic'],
+            "subject": full_timestamp_data['metadatas'][0][ind]['subject'],
+            "course_name": full_timestamp_data['metadatas'][0][ind]['course_name'],
             "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
             "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
         }

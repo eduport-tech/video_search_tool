@@ -1,7 +1,7 @@
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from core_llms import gemini_2_flash_exp, llm
+from core_llms import gemini_2_flash_exp, llm, gemini_2_flash_lite
 
 select_context_template = """
 Question: {question}
@@ -14,7 +14,7 @@ Please respond with only the number (1-{num_results}) of the result that is most
 
 # Create the prompt template and chain.
 select_context_prompt = PromptTemplate.from_template(select_context_template)
-select_context_chain = select_context_prompt | gemini_2_flash_exp | StrOutputParser()
+select_context_chain = select_context_prompt | gemini_2_flash_lite | StrOutputParser()
 
 validation_template = """
 Compare the Question and Context and replay whether Context is related to Question answer. If input is in Malayalam, translate to English first and then proceed with the task.

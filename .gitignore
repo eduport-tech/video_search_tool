@@ -1,5 +1,7 @@
 env/
 *.zip
-__pycache__
+__pycache__/
 .vscode
 .envrc
+.env
+*.pyc
