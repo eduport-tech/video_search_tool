@@ -28,4 +28,12 @@ gemini_2_flash_exp = ChatGoogleGenerativeAI(
     max_retries=2,
 )
 
+gemini_2_flash_lite = ChatGoogleGenerativeAI(
+    model="gemini-2.0-flash-lite-preview-02-05",
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2,
+)
+
 llm = llama_3
