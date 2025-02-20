@@ -7,7 +7,7 @@ from starlette.middleware.cors import CORSMiddleware
 import sentry_sdk
 
 from server.config import CONFIG
-from server.models.user import UserMessageHistory, Messages
+from server.models.user import User, Message
 
 if CONFIG.environment == "PROD":
     sentry_sdk.init(
@@ -31,7 +31,7 @@ It supports:
 async def lifespan(app: FastAPI):
     """Initialize application service"""
     app.db = AsyncIOMotorClient(CONFIG.mongo_uri).doubt_clearance
-    await init_beanie(app.db, document_models=[UserMessageHistory, Messages])
+    await init_beanie(app.db, document_models=[User, Message])
     print("Startup Complete")
     yield
     print("Shutdown complete")

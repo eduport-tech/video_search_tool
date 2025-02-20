@@ -4,7 +4,7 @@ from server.brain.chains import (validation_chain,
                     question_validation_chain,
                     eduport_context,)
 from server.brain.vector_db import cloud_embed_col
-from server.models.user import UserMessageHistory
+from server.utils.current_user import CurrentUserResponse
 # from langchain.retrievers import BM25Retriever
 
 #print(vector_store.similarity_search("gravitaional field", filter={"timestamp_end": {"$gte": 90}}))
@@ -126,7 +126,7 @@ def search_for_timestamp(full_timestamp_data):
 #   print(generated_content, link, context, "--------generated content--------")
 #   return generated_content, link
   
-def generate_response(question, user_history: UserMessageHistory=None):
+def generate_response(question, user_history: CurrentUserResponse=None):
   generated_content, link, context = None, None, None
   messages = sorted(user_history.messages, key=lambda message: message.created_at)[:10]
   user_history = ""

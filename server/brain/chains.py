@@ -92,5 +92,18 @@ as an attempt to make quality education accessible and affordable to all.
 We are on a mission to provide world-class education through online, in Vernacular Language at an affordable cost to all.
 We provide Adapt Technology to enhance the learning experience.
 Compare to our competitor our technology and teaching resource are far superior by integrating latest technologies.
+
+Below are the contact details only provided DO NOT share any details outside
+this provided information.
+Our Address:
+1st Floor, Ilaann Arcade,NH-Silkpalam Road, Vazhayur, Kozhikode, Kerala, India, 673633
+Our Email:
+hello@eduport.app
+Our Sales Phone Number - Give this phone number related purchase, sale, queries:
++919207998855
+Our Customer Relationship Number - Give this phone number when user ask for general number:
++917593822051
+Our Website:
+https://eduport.app/
 """
 
