@@ -16,7 +16,7 @@ def select_best_context_via_gemini(results, question):
     # Format the results into a string.
     formatted_results = ""
     for idx, res in enumerate(results):
-        excerpt = res.get('content', '')[:200]  # Use first 200 characters for brevity.
+        excerpt = res.get('content', '')
         chapter_name = res.get('chapter_name', 'Unknown Chapter')
         formatted_results += f"\nResult {idx+1} (Chapter: {chapter_name}): {excerpt}\n"
     
@@ -76,47 +76,70 @@ def search_for_timestamp(full_timestamp_data):
         matched_data.append(processed_data)
     return matched_data
 
-def hint_mode_conversation(question, context, user_input=None):
+import json
+from pathlib import Path
+
+def hint_mode_conversation(question, context, session_id="default_session"):
     """
-    A function to simulate the conversation flow in hint mode.
-    It will provide ongoing hints and nudges until the user reaches the answer.
-    """
-    # Keep a history of user responses and AI hints (to make the conversation dynamic)
-    conversation_history = []
-
-    # Check the initial context and question to start the hint mode conversation
-    prompt = f"Question: {question}\nContext: {context}\n\nStart asking questions or providing hints based on the context. \n" \
-             f"The hints should guide the user towards the correct answer without directly giving it."
-
-    # Append the current prompt to the conversation history
-    conversation_history.append({"role": "system", "content": prompt})
-
-    # Simulate conversation with the user
-    while True:
-        # If the user provided an input, use it to create new hints/questions
-        if user_input:
-            conversation_history.append({"role": "user", "content": user_input})
-
-        # Get the hint or question from the AI (using the hint mode chain)
-        hint_response = hint_mode_chain.invoke({
-            "context": context,
-            "question": question,
-            "conversation_history": conversation_history
-        })
-
-        # Append the AI's response to the conversation history
-        conversation_history.append({"role": "assistant", "content": hint_response})
-
-        # Check if the user has converged on the correct answer
-        if "correct answer" in hint_response.lower():  # Assuming you detect when the correct answer is given
-            break
+    Manages a hint-mode conversation where the AI guides the user to an answer
+    rather than providing it directly.
+    
+    Args:
+        question (str): The user's question
+        context (str): The context data retrieved for this question
+        session_id (str): A unique identifier for the session. Defaults to "default_session".
         
-        # Update user input based on AI's hint
-        user_input = hint_response
+    Returns:
+        str: The AI response or termination message
+    """
+    # Define the history file path
+    history_file = Path(f"hint_mode_history_{session_id}.json")
+    
+    # Load existing conversation history or create new
+    if history_file.exists():
+        try:
+            with open(history_file, "rb") as f:
+                conversation_data = json.load(f)
+        except json.JSONDecodeError:
+            # Handle corrupted JSON file
+            conversation_data = {"history": []}
+    else:
+        conversation_data = {"history": []}
+    
+    # Format the conversation history for the prompt
+    formatted_history = ""
+    for entry in conversation_data["history"]:
+        formatted_history += f"Student: {entry['question']}\nTutor: {entry['response']}\n\n"
+    
+    # Generate response using the hint mode chain
+    response = hint_mode_chain.invoke({
+        "question": question,
+        "context": context,
+        "conversation_history": formatted_history
+    })
+    
+    # Check if we need to terminate the conversation
+    if response.strip().lower() == "terminate":
+        # Clear the conversation history
+        conversation_data = {"history": []}
+        with open(history_file, "w") as f:
+            json.dump(conversation_data, f)
+        
+        return "Great! I'm glad you understand now. Let me know if you have any other questions."
+    
+    # Store this interaction in the history
+    conversation_data["history"].append({
+        "question": question,
+        "response": response
+    })
+    
+    # Save updated history
+    with open(history_file, "w") as f:
+        json.dump(conversation_data, f)
+    
+    return response
 
-    return hint_response
-
-def generate_response(question, use_hint_mode=False):
+def generate_response(question, use_hint_mode=False, session_id="default_session"):
     generated_content, link = None, None
 
     # Use Llama for question validation.
@@ -138,7 +161,7 @@ def generate_response(question, use_hint_mode=False):
 
     # If hint mode is enabled, use the hint mode conversation flow
     if use_hint_mode:
-        generated_content = hint_mode_conversation(question, context)
+        generated_content = hint_mode_conversation(question, context, session_id)
     else:
         # Use Llama to generate the final answer
         generated_content = main_chat_chain.invoke({"context": context, "question": question})

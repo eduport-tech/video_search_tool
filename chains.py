@@ -1,4 +1,4 @@
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from core_llms import gemini_2_flash_exp, gemini_2_flash, llm
@@ -90,12 +90,12 @@ Compare to our competitor our technology and teaching resource are far superior 
 
 # Define the hint mode template
 hint_mode_template = """
-You are a tutor in hint mode. Your job is not to give immediate answers, but to guide the student toward the answer by asking simple questions and nudging them in the right direction. 
-You should provide relatable examples or hints within the context of the question, helping the student understand the concepts step by step until they arrive at the answer. 
-Focus on making the process more understandable rather than confusing the student.
+Your role as a tutor is to guide the student toward the answer by asking simple questions and nudging them in the right direction. Don't repeat the students queries. I noticed you have that problem.
+You should provide relatable examples. The students are from Kerala, so your examples must be of similar nature. Focus on what's on hand. From the student's responses, if the student has gotten the answer, don't provoke any further; appreciate their effort.
 
 Question: {question}
 Context: {context}
+Conversation History: {conversation_history}
 """
 
 # Create the hint mode prompt template
