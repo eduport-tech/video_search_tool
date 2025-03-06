@@ -1,16 +1,16 @@
-from server.models.user import Message
+from server.models.user import Message, User
 from server.utils.current_user import CurrentUserResponse
+from typing import List
 
 
-async def add_generated_response_to_memory(generated_content, link, question, user_history: CurrentUserResponse):
-    is_duplicate = False
-    for message in user_history.messages:
-        if message.question == question and message.answer == generated_content:
-            is_duplicate = True
-            break
-    if not is_duplicate:
-        new_message = Message(question=question,
-                            answer=generated_content,
-                            video_url=link,
-                            user=user_history.user)
-        await new_message.save()
+async def add_generated_response_to_memory(generated_content, link, question,
+                                           user: User,
+                                           total_token_used: int = None):
+    new_message = Message(question=question,
+                        answer=generated_content,
+                        video_url=link,
+                        user=user,
+                        token_count=total_token_used,)
+    await new_message.save()
+    user.total_token += total_token_used
+    await user.save()

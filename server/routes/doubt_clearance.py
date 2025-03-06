@@ -20,9 +20,12 @@ def ping():
 
 @router.post("/question")
 async def video_search_api(question: str, user_history: CurrentUserResponse = Depends(current_user)):
-    generated_content, link = generate_response(question, user_history=user_history)
+    generated_content, link, total_token = generate_response(question, user_history=user_history)
     if generated_content:
-        await add_generated_response_to_memory(generated_content, link, question, user_history)
+        await add_generated_response_to_memory(generated_content,
+                                               link, question,
+                                               user_history.user,
+                                               total_token)
     return {"content": generated_content, "link": link}
 
 

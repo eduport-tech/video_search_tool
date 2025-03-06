@@ -24,7 +24,7 @@ async def current_user(authorization: str | None = Header(None), x_user_id: str 
         if user:
             if user_token and user_token != user.auth_token:
                 user.auth_token = user_token
-                user.save()
+                await user.save()
             if not user.is_allowed:
                 raise HTTPException(status_code=400,
                                     detail="Your not allowed to access it.")
@@ -37,7 +37,8 @@ async def current_user(authorization: str | None = Header(None), x_user_id: str 
             starting_history = User(user_id=x_user_id)
             if user_token:
                 starting_history.auth_token = user_token
-            return await User.insert_one(starting_history)
+            await User.insert_one(starting_history)
+            return CurrentUserResponse(user=starting_history, messages=[])
     else:
         raise HTTPException(status_code=400,
                             detail="The x-user-id and Authorization is required.")

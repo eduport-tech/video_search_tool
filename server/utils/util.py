@@ -1,13 +1,45 @@
-# from vector_db import client, vector_store, embeddings
 from server.brain.chains import (validation_chain,
                     main_chat_chain,
-                    question_validation_chain,
-                    eduport_context,)
+                    validation_category_chain,
+                    general_category_chain,
+                    eduport_category_chain,
+                    message_summery_chain,
+                    select_context_chain,
+                    search_query_chain,)
 from server.brain.vector_db import cloud_embed_col
 from server.utils.current_user import CurrentUserResponse
-# from langchain.retrievers import BM25Retriever
+from langchain_community.callbacks.manager import get_openai_callback
 
-#print(vector_store.similarity_search("gravitaional field", filter={"timestamp_end": {"$gte": 90}}))
+
+def select_best_context(results, question):
+    """
+    Given a list of context results (each a dict with at least 'content',
+    'url', and 'chapter_name'),
+    Returns the chosen result (a dict).
+    """
+    formatted_results = ""
+    for idx, res in enumerate(results):
+        excerpt = res.get('content', '')[:200]  # Use first 200 characters for brevity.
+        chapter_name = res.get('chapter_name', 'Unknown Chapter')
+        formatted_results += f"\nResult {idx+1} (Chapter: {chapter_name}): {excerpt}\n"
+    
+    chain_input = {
+        "question": question,
+        "results": formatted_results,
+        "num_results": len(results)
+    }
+    
+    # Call the Gemini-powered chain for transcription comparison.
+    output = select_context_chain.invoke(chain_input)
+    
+    try:
+        chosen_num = int(output.strip())
+        if 1 <= chosen_num <= len(results):
+            return results[chosen_num - 1]
+        else:
+            return results[0]  # Default to the first result if out of range.
+    except Exception:
+        return results[0]  # Default to the first result if parsing fails.
 
 def get_the_correct_context(context_datas, question):
   for context_data in context_datas:
@@ -40,32 +72,6 @@ def generate_context_response(contexts_data, question):
     video_data = "Can't find the video for your question."
   return video_data, link
 
-# def generate_topics(question):
-#   rewrited_question = generate_topic_chain.invoke({"question": question})
-#   return rewrited_question
-
-# def fetch_from_full_text_db(question):
-#   query_result = full_text_collection.query(query_texts=[question], n_results=1)
-#   if query_result:
-#     return query_result
-
-# def fetch_from_timestamp_db(url):
-#   query_result = timestamp_collection.get(where={"url": url})
-#   if query_result:
-#     return query_result
-
-# def generate_response(question):
-#   topic_list = generate_topics(question)
-#   # context_data = vector_store.similarity_search_by_vector(embeddings.embed_query(question), k=5)
-#   # context_data = fetch_from_full_text_db(question)
-#   context_data = fetch_from_full_text_db(question)
-#   context, link = generate_context_response(context_data, question)
-#   if link and topic_list:
-#     context, link = 
-#   generated_content = main_chat_chain.invoke({"context": context, "question": question})
-#   print(generated_content, link, context, "--------generated content--------")
-#   return generated_content, link
-
 def get_main_video_data(context):
   url_tag = context['metadatas'][0][0]['youtube_id']
   video_name = context['metadatas'][0][0]['video_title']
@@ -73,77 +79,108 @@ def get_main_video_data(context):
   return url_tag, video_name, content
 
 def search_for_timestamp(full_timestamp_data):
-  similarity_distance = full_timestamp_data['distances'][0][0]
-  matched_data = []
-  if similarity_distance <= 0.7:
+    matched_data = []
     full_documents_data = full_timestamp_data['documents'][0]
     for ind, ques in enumerate(full_documents_data):
-      processed_data = {
-        "url": full_timestamp_data['metadatas'][0][ind]['youtube_id'],
-        "video_name": full_timestamp_data['metadatas'][0][ind]['video_title'],
-        "content": ques,
-        "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
-        "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
-      }
-      matched_data.append(processed_data)
-  return matched_data
-
-# def generate_response(question):
-#   generated_content, link, context = None, None, None
-#   topic_list = generate_topics(question)
-#   main_video_context = fetch_from_full_text_db(question)
-#   if main_video_context.get('documents'):
-#     link, video_name, context = get_main_video_data(main_video_context)
-#     if topic_list:
-#       timestamp_context = search_for_timestamp(topic_list, link)
-#       print(timestamp_context)
-#       if timestamp_context:
-#         context, link = generate_context_response(timestamp_context, question)
-#         # print("timestampt data--------", context)
-#     generated_content = main_chat_chain.invoke({"context": context, "question": question})
-#     print(generated_content, link, context, "--------generated content--------")
-#   return generated_content, link
-
-# def get_bm25search(question):
-#   all_text_chunk = vector_store.get()['documents']
-#   keyword_retriever = BM25Retriever.from_texts(all_text_chunk)
-#   keyword_retriever.k =  1
-#   response = keyword_retriever.invoke(question)
-#   return response[0] if response else None
-
-# def generate_response(question):
-#   generated_content, link, context = None, None, None
-#   context = get_bm25search(question)
-#   if not context:
-#     return "Cant find the video", None
-#   context_data = timestamp_collection.get(where_document={"$contains": context.page_content}, limit=1)
-#   # valid = validation_chain.invoke({"context": context_data, "question": question})
-#   # if valid == "FALSE":
-#   #   context, link = "Cant find the video", None
-#   # else:
-#   link = generate_youtube_link(context_data['metadatas'][0])
-#   generated_content = main_chat_chain.invoke({"context": context, "question": question})
-#   print(generated_content, link, context, "--------generated content--------")
-#   return generated_content, link
+        processed_data = {
+            "url": full_timestamp_data['metadatas'][0][ind]['youtube_id'],
+            "video_name": full_timestamp_data['metadatas'][0][ind]['video_title'],
+            "content": ques,
+            "chapter_name": full_timestamp_data['metadatas'][0][ind]['chapter_name'],
+            "timestamp_start": full_timestamp_data['metadatas'][0][ind]['timestamp_start'],
+            "timestamp_end": full_timestamp_data['metadatas'][0][ind]['timestamp_end'],
+        }
+        matched_data.append(processed_data)
+    return matched_data
   
-def generate_response(question, user_history: CurrentUserResponse=None):
-  generated_content, link, context = None, None, None
-  messages = sorted(user_history.messages, key=lambda message: message.created_at)[:10]
-  user_history = ""
-  for indx, message in enumerate(messages):
-      user_history += f"\nQuestion{indx}: {message.question}\nAnswer{indx}: {message.answer}"
-  validation_response = question_validation_chain.invoke({"question": question})
-  if validation_response !=  'YES':
-    generated_content = main_chat_chain.invoke({'context': eduport_context, 'question': question, 'history': user_history})
-    return generated_content, None
-  context = cloud_embed_col.query(query_texts=question, n_results=1)
-  processed_data = search_for_timestamp(context) if context else None
-  if processed_data:
-    context = generate_vide_data(processed_data[0])
-    link = generate_youtube_link(processed_data[0])
-  else:
-    context = "Can't find the video for the question"
-    link = None
-  # context, link = generate_context_response(processed_data, question)
-  generated_content = main_chat_chain.invoke({"context": context, "question": question, 'history': user_history})
+# def generate_response(question, user_history: CurrentUserResponse=None):
+#   generated_content, link, context = None, None, None
+#   history = []
+#   for message in user_history.messages:
+#       history.append({"role": "user", "content": message.question})
+#       history.append({"role": "assistant", "content": message.answer})
+#   print(history)
+#   with get_openai_callback() as cb:
+#     validation_response = question_validation_chain.invoke({"question": question, "history": history}).strip()
+#     print(validation_response)
+#     if validation_response !=  'YES':
+#       generated_content = main_chat_chain.invoke({'context': eduport_context, 'question': question, 'history': history})
+#       return generated_content, None, cb.total_tokens
+#     context = cloud_embed_col.query(query_texts=question, n_results=1)
+#     processed_data = search_for_timestamp(context) if context else None
+#     if processed_data:
+#       context = generate_vide_data(processed_data[0])
+#       link = generate_youtube_link(processed_data[0])
+#     else:
+#       context = "Can't find the video for the question"
+#       link = None
+#     # context, link = generate_context_response(processed_data, question)
+#     print(new_main_template.format(context=context, question=question, history=history))
+#     generated_content = main_chat_chain.invoke({"context": context, "question": question, 'history': history})
+#     print(cb.total_tokens)
+#     return generated_content, link, cb.total_tokens
+
+def generate_general_response(question):
+  response = general_category_chain.invoke({"user_input": question})
+  return response, None
+
+def generate_eduport_response(question):
+  response = eduport_category_chain.invoke({"user_input": question})
+  return response, None
+
+def generate_history_summary(user_history: CurrentUserResponse=None):
+  history = []
+  summary = ""
+
+  for message in user_history.messages[:10]:
+    history.append({"role": "user", "content": message.question, "timestamp": message.created_at})
+    history.append({"role": "assistant", "content": message.answer, "timestamp": message.created_at})
+
+  if history:
+    summary = message_summery_chain.invoke({"history": history})
+  return summary
+
+def generate_context_response(contexts_data, question):
+    # Use Gemini (via the select_context_chain) to pick the best transcription context.
+    correct_context = select_best_context(contexts_data, question)
+    print("context data", correct_context)
+    if correct_context:
+        link = generate_youtube_link(correct_context)
+        video_data = generate_vide_data(correct_context)
+    else:
+        link = None
+        video_data = "Can't find the video for your question."
+    return video_data, link
+
+def generate_study_response(question, user_history: CurrentUserResponse=None):
+  context = ""
+  link = None
+  history_summary = generate_history_summary(user_history)
+  print("history data---->>>", history_summary)
+  is_video_search = search_query_chain.invoke({"question": question}).rstrip()
+  print("is_video_search", is_video_search)
+  if is_video_search == 'YES':
+    context = cloud_embed_col.query(query_texts=question, n_results=25)
+    processed_data = search_for_timestamp(context) if context else None
+    if processed_data:
+      context, link = generate_context_response(processed_data, question)
+  
+  generated_content = main_chat_chain.invoke({"context": context,
+                                              "question": question,
+                                              "history": history_summary,})
   return generated_content, link
+
+def generate_response(question, user_history: CurrentUserResponse=None):
+  with get_openai_callback() as cb:
+    generated_content, link = None, None
+    validated_category = validation_category_chain.invoke({"user_input": question}).rstrip()
+    match validated_category:
+      case "GENERAL":
+        generated_content, link= generate_general_response(question)
+      case "EDUPORT":
+        generated_content, link = generate_eduport_response(question)
+      case "STUDY":
+        generated_content, link = generate_study_response(question, user_history)
+      case _:
+        generated_content, link = None, None
+    return generated_content, link, cb.total_tokens
