@@ -1,22 +1,9 @@
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from server.brain.core_llms import (gemini_2_flash_exp, llm,
                                     gemini_2_flash_lite_vertex,
                                     gemini_2_pro_vertex)
-
-select_context_template = """
-Question: {question}
-
-Below are several excerpts from video transcripts. Each result is numbered and includes its chapter name, an excerpt:
-{results}
-
-Please respond with only the number (1-{num_results}) of the result that is most relevant to the question. Do not include any additional text.
-"""
-
-# Create the prompt template and chain.
-select_context_prompt = PromptTemplate.from_template(select_context_template)
-select_context_chain = select_context_prompt | gemini_2_flash_exp | StrOutputParser()
 
 validation_template = """
 Compare the Question and Context and replay whether Context is related to Question answer. If input is in Malayalam, translate to English first and then proceed with the task.
@@ -52,17 +39,14 @@ If the CONTEXT is empty, reply with answer of the QUESTION in a simple manner.
 Never talk about CONTEXT, QUESTION OR MESSAGE_HISTORY_SUMMARY or anything related context.
 NEVER talk about illustrations or figures only talk about texts.
 ONLY return in text format.
-Please remove the bold formatting (**) from the headings in the following text,
+Please remove the bold formatting (**) and subscript formatting in the following text,
 and present the text with the headings in standard text format.
 Retain the rest of the text as is.
+Focus on the topic with LAST_ASKED marker in it and solve the question using it.
 
 QUESTION:
 This is question asked by user
 {question}
-
-CONTEXT:
-This a transcription of a audio chunk
-{context}
 
 MESSAGE_HISTORY_SUMMARY:
 This is the previous chat with ai there is timestamp related to each topic.
@@ -165,12 +149,12 @@ eduport_category_prompt = PromptTemplate.from_template(eduport_category_template
 eduport_category_chain = eduport_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
 
 message_summery_template = """
-Below are the list of user and AI message history create a summery of the conversation with focus on studying.
-omit greeting and small talk messages keep attention on learning and studying.
-group the related topics together and separate different topics and add most recent timestamp to category.
-ONLY return the summary text.
-Sort using timestamp in ascending order.
-Please remove the bold formatting (**) from the headings in the following text, and present the text with the headings in standard text format. Retain the rest of the text as is.
+Below are the list of messages with question, answer and timestamp.
+1. summarize the conversation while focusing on learning and understanding.
+2. omit small talks, greetings, and other un related messages.
+2. group messages with same topic together.
+3. Add LAST_ASKED marker to the topic which has the latest message in it.
+4. Don't use bold formatting.
 
 Message History:
 {history}
@@ -192,7 +176,7 @@ select_context_prompt = PromptTemplate.from_template(select_context_template)
 select_context_chain = select_context_prompt | gemini_2_flash_exp | StrOutputParser()
 
 search_query_template = """
-Check whether the QUESTION is directly related to studying or topic.
+Check whether the QUESTION is directly related to studying or topic exclude general and vague terms like equation, explain it and expand it.
 Return YES else Return NO.
 QUESTION:
 {question}

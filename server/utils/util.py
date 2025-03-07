@@ -133,21 +133,20 @@ def generate_eduport_response(question):
   return response, None
 
 def generate_history_summary(user_history: CurrentUserResponse=None):
-  history = []
+  # history = []
   summary = ""
 
-  for message in user_history.messages[:10]:
-    history.append({"role": "user", "content": message.question, "timestamp": message.created_at})
-    history.append({"role": "assistant", "content": message.answer, "timestamp": message.created_at})
+  # for message in user_history.messages[:10]:
+  #   history.append({"role": "user", "content": message.question, "timestamp": message.created_at})
+  #   history.append({"role": "assistant", "content": message.answer, "timestamp": message.created_at})
 
-  if history:
-    summary = message_summery_chain.invoke({"history": history})
+  if user_history.messages:
+    summary = message_summery_chain.invoke({"history": user_history.messages[:20]})
   return summary
 
 def generate_context_response(contexts_data, question):
     # Use Gemini (via the select_context_chain) to pick the best transcription context.
     correct_context = select_best_context(contexts_data, question)
-    print("context data", correct_context)
     if correct_context:
         link = generate_youtube_link(correct_context)
         video_data = generate_vide_data(correct_context)
@@ -160,9 +159,7 @@ def generate_study_response(question, user_history: CurrentUserResponse=None):
   context = ""
   link = None
   history_summary = generate_history_summary(user_history)
-  print("history data---->>>", history_summary)
   is_video_search = search_query_chain.invoke({"question": question}).rstrip()
-  print("is_video_search", is_video_search)
   if is_video_search == 'YES':
     context = cloud_embed_col.query(query_texts=question, n_results=25)
     processed_data = search_for_timestamp(context) if context else None
