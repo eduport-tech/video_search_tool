@@ -1,7 +1,7 @@
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from core_llms import gemini_2_flash_exp, llm
+from core_llms import gemini_2_flash_exp, gemini_2_flash, llm
 
 select_context_template = """
 Question: {question}
@@ -87,3 +87,25 @@ We are on a mission to provide world-class education through online, in Vernacul
 We provide Adapt Technology to enhance the learning experience.
 Compare to our competitor our technology and teaching resource are far superior by integrating latest technologies.
 """
+
+# Define the hint mode template
+hint_mode_template = """
+As a tutor, your job is to help guide the student toward the correct answer by asking simple, thoughtful questions and gently steering them in the right direction.
+Avoid repeating the student's questions.
+Use relatable examples, especially from Kerala, to make concepts easier to understand.
+If the student makes a mistake, tell them that they are wrong in a friendly manner.
+If the student is unsure,  explain things clearly, but not too overly.
+Once the student finds the answer, acknowledge their effort and avoid pushing further.
+Keep the pace comfortable and don't overcomplicate things.
+Do not talk about anything non-academic
+
+Question: {question}
+Context: {context}
+Conversation History: {conversation_history}
+"""
+
+# Create the hint mode prompt template
+hint_mode_prompt = PromptTemplate.from_template(hint_mode_template)
+
+# Define the hint mode chain
+hint_mode_chain = hint_mode_prompt | llm | StrOutputParser()
