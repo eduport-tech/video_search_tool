@@ -11,7 +11,6 @@ from server.brain.vector_db import cloud_embed_col
 from server.utils.current_user import CurrentUserResponse
 from langchain_community.callbacks.manager import get_openai_callback
 
-
 def select_best_context(results, question):
     """
     Given a list of context results (each a dict with at least 'content',
@@ -171,32 +170,33 @@ def generate_study_response(question, user_history: CurrentUserResponse=None):
                                               "history": history_summary,})
   return generated_content, link
 
-def hint_mode(question: str, user_history: CurrentUserResponse, context: str = ""):
+def hint_mode_response(question: str, user_history: CurrentUserResponse):
     """
     This function is triggered when Hint Mode is enabled. It gathers the user's chat history
     and passes it along with the current question and context to the `hint_mode_chain`.
     """
-    # Step 1: Gather the conversation history
-    conversation_history = []
-    for message in user_history.messages:
-        conversation_history.append(f"User: {message.question}")
-        conversation_history.append(f"Assistant: {message.answer}")
+    with get_openai_callback() as cb:
+      # Step 1: Gather the conversation history
+      conversation_history = []
+
+      for message in user_history:
+          conversation_history.append(f"User: {message.question}")
+          conversation_history.append(f"Assistant: {message.answer}")
+      
+      # Step 2: Format the conversation history as a string
+      conversation_history_str = "\n".join(conversation_history)
+      
+      # Step 3: Prepare the input for the hint_mode_chain.
+      # We have the `question`, `context`, and the formatted `conversation_history`.
+      chain_input = {
+          "question": question,
+          "conversation_history": conversation_history_str
+      }
+      
+      # Step 4: Generate the hint by invoking the `hint_mode_chain`.
+      generated_hint = hint_mode_chain.invoke(chain_input)
     
-    # Step 2: Format the conversation history as a string
-    conversation_history_str = "\n".join(conversation_history)
-    
-    # Step 3: Prepare the input for the hint_mode_chain.
-    # We have the `question`, `context`, and the formatted `conversation_history`.
-    chain_input = {
-        "question": question,
-        "context": context,
-        "conversation_history": conversation_history_str
-    }
-    
-    # Step 4: Generate the hint by invoking the `hint_mode_chain`.
-    generated_hint = hint_mode_chain.invoke(chain_input)
-    
-    return generated_hint, None  # No video link needed for hint mode (assuming no link is returned)
+    return generated_hint, cb.total_tokens  # No video link needed for hint mode (assuming no link is returned)
 
 def generate_response(question, user_history: CurrentUserResponse=None):
   with get_openai_callback() as cb:

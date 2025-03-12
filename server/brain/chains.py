@@ -213,7 +213,6 @@ Keep the pace comfortable and don't overcomplicate things.
 Do not talk about anything non-academic
 
 Question: {question}
-Context: {context}
 Conversation History: {conversation_history}
 """
 
