@@ -12,6 +12,7 @@ class Message(Document):
     is_cleared: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
     user: Link["User"] = Field(original_field="messages")
+    is_hint: bool = False
 
 
 class User(Document):
