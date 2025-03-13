@@ -27,7 +27,7 @@ async def video_search_api(question: str,
     # If hint_mode_enabled is True, find the last non-hint message and gather history from that point
     if hint_mode_enabled:
         # Get the conversation history starting from the last non-hint message
-        conversation_history_str = await get_conversation_history_for_hint_mode(user_history.user)
+        conversation_history_str = get_conversation_history_for_hint_mode(user_history)
         
         generated_content, total_token = hint_mode_response(question, user_history=conversation_history_str)
         

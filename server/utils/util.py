@@ -178,10 +178,10 @@ def hint_mode_response(question: str, user_history: CurrentUserResponse):
     with get_openai_callback() as cb:
       # Step 1: Gather the conversation history
       conversation_history = []
-
+      # print(user_history)
       for message in user_history:
-          conversation_history.append(f"User: {message.question}")
-          conversation_history.append(f"Assistant: {message.answer}")
+          conversation_history.append(f"User: {message['question']}")
+          conversation_history.append(f"Assistant: {message['answer']}")
       
       # Step 2: Format the conversation history as a string
       conversation_history_str = "\n".join(conversation_history)
