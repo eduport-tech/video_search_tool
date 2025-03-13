@@ -22,12 +22,12 @@ def ping():
 @router.post("/question")
 async def video_search_api(
     question: str,
-    search_type: str = None,
+    type: str = None,
     video_id: int = None,
     user_history: CurrentUserResponse = Depends(current_user),
 ):
 
-    if search_type == "subtopic":
+    if type == "subtopic":
         generated_content, link, total_token = generate_response(
             question,
             video_id=video_id,
