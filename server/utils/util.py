@@ -37,7 +37,6 @@ def select_best_context(results, question):
 
     # Call the Gemini-powered chain for transcription comparison.
     output = select_context_chain.invoke(chain_input)
-    print("response-------->>", output)
 
     try:
         chosen_num = int(output.strip())
