@@ -3,7 +3,7 @@ import magic
 
 from langchain_core.messages import HumanMessage
 
-from server.brain.core_llms import gemini_2_flash_lite_vertex as llm
+from server.brain.core_llms import llm
 
 
 def get_mime_type_magic(file_bytes):
