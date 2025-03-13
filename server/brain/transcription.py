@@ -1,21 +1,33 @@
-import google.generativeai as genai
+from base64 import b64encode
+import magic
 
-genai.configure(api_key="AIzaSyA4ZC2GPhOt5NYcSXcySZXYwZj7PJ6tE-M")
+from langchain_core.messages import HumanMessage
 
-model = genai.GenerativeModel("gemini-exp-1206")
+from server.brain.core_llms import gemini_2_flash_lite_vertex as llm
 
-# prompt = "Transcribe this audio to english if not english translate it and only return the transcribed data."
-prompt = "ONLY Translate audio to english always return single string."
+
+def get_mime_type_magic(file_bytes):
+    try:
+        mime = magic.from_buffer(file_bytes, mime=True)
+        return mime
+    except Exception as e:
+        print(f"Error getting MIME type: {e}")
+        return "audio/mp3"
+
 
 def generate_transcription_data(audio_file):
-    response = model.generate_content([
-        prompt,
-        {
-            "mime_type": "audio/mp3",
-            "data": audio_file
-        }
-    ],
-    generation_config = genai.GenerationConfig(
-        temperature=0,
-    ))
-    return response.text
+    audio_base64 = b64encode(audio_file).decode("utf-8")
+
+    audio_mime_type = get_mime_type_magic(audio_file)
+    audio_input = {
+        "type": "media",
+        "mime_type": audio_mime_type,
+        "data": audio_base64,
+    }
+    prompt_message = {
+        "type": "text",
+        "text": "Translate the following audio from any language to English. Return the translated text in English only. Language code: 'en'. Do not return the result in any other language, especially not Malayalam. Output only the translated text.",
+    }
+    message = HumanMessage(content=[prompt_message, audio_input])
+    response = llm.invoke([message])
+    return response.content

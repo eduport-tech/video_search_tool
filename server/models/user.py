@@ -4,6 +4,7 @@ from datetime import datetime
 from beanie import Document, Indexed, Link
 from pydantic import Field
 
+
 class Message(Document):
     question: str
     answer: str
@@ -16,10 +17,13 @@ class Message(Document):
 
 class User(Document):
     """User Data and Message History"""
+
     user_id: Annotated[str, Indexed(str, unique=True)]
     total_token: int = 0
     is_allowed: bool = True
     auth_token: str = ""
+    is_premium: bool = None
+
     messages: Optional[List[Link[Message]]] = []
 
     @property

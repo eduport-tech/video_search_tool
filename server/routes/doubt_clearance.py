@@ -1,4 +1,5 @@
 """Doubt Clearance Route"""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File
@@ -19,13 +20,28 @@ def ping():
 
 
 @router.post("/question")
-async def video_search_api(question: str, user_history: CurrentUserResponse = Depends(current_user)):
-    generated_content, link, total_token = generate_response(question, user_history=user_history)
+async def video_search_api(
+    question: str,
+    search_type: str = None,
+    video_id: int = None,
+    user_history: CurrentUserResponse = Depends(current_user),
+):
+
+    if search_type == "subtopic":
+        generated_content, link, total_token = generate_response(
+            question,
+            video_id=video_id,
+            user_history=user_history,
+        )
+    else:
+        generated_content, link, total_token = generate_response(
+            question,
+            user_history=user_history,
+        )
     if generated_content:
-        await add_generated_response_to_memory(generated_content,
-                                               link, question,
-                                               user_history.user,
-                                               total_token)
+        await add_generated_response_to_memory(
+            generated_content, link, question, user_history.user, total_token
+        )
     return {"content": generated_content, "link": link}
 
 
@@ -41,9 +57,11 @@ async def clear_user_history(user_history: CurrentUserResponse = Depends(current
         for message in user_history.messages:
             message.is_cleared = True
             await message.save()
-    return {"details":"message cleared successfully"}
+    return {"details": "message cleared successfully"}
 
 
 @router.get("/user-history")
-async def get_user_chat_history(user_history: CurrentUserResponse = Depends(current_user)):
+async def get_user_chat_history(
+    user_history: CurrentUserResponse = Depends(current_user),
+):
     return user_history.messages

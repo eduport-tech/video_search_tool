@@ -1,9 +1,12 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from server.brain.core_llms import (gemini_2_flash_exp, llm,
-                                    gemini_2_flash_lite_vertex,
-                                    gemini_2_pro_vertex)
+from server.brain.core_llms import (
+    gemini_2_flash_exp,
+    llm,
+    gemini_2_flash_lite_vertex,
+    gemini_2_pro_vertex,
+)
 
 validation_template = """
 Compare the Question and Context and replay whether Context is related to Question answer. If input is in Malayalam, translate to English first and then proceed with the task.
@@ -43,17 +46,21 @@ Please remove the bold formatting (**) and subscript formatting in the following
 and present the text with the headings in standard text format.
 Retain the rest of the text as is.
 Focus on the topic with LAST_ASKED marker in it and solve the question using it.
+Dont always relay on context
 
 QUESTION:
 This is question asked by user
 {question}
+
+CONTEXT:
+{context}
 
 MESSAGE_HISTORY_SUMMARY:
 This is the previous chat with ai there is timestamp related to each topic.
 {history}
 """
 main_chat_prompt = PromptTemplate.from_template(new_main_template)
-main_chat_chain = main_chat_prompt | gemini_2_pro_vertex | StrOutputParser()
+main_chat_chain = main_chat_prompt | llm | StrOutputParser()
 
 question_validation_template = """
 By checking question and history did the question is related to study in Math, Science, Chemistry, Biology in A pre college level.
@@ -102,7 +109,9 @@ USER_INPUT:
 """
 
 validation_category_prompt = PromptTemplate.from_template(validation_category_template)
-validation_category_chain = validation_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+validation_category_chain = (
+    validation_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+)
 
 general_category_template = """
 Below is a USER_INPUT which is either a greeting from user or general question.
@@ -114,7 +123,9 @@ USER_INPUT:
 {user_input}
 """
 general_category_prompt = PromptTemplate.from_template(general_category_template)
-general_category_chain = general_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+general_category_chain = (
+    general_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+)
 
 eduport_category_template = """
 Below is context about Eduport your build by Eduport so always favor
@@ -146,7 +157,9 @@ USER_INPUT:
 {user_input}
 """
 eduport_category_prompt = PromptTemplate.from_template(eduport_category_template)
-eduport_category_chain = eduport_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+eduport_category_chain = (
+    eduport_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+)
 
 message_summery_template = """
 Below are the list of messages with question, answer and timestamp.
@@ -160,7 +173,9 @@ Message History:
 {history}
 """
 message_summery_prompt = PromptTemplate.from_template(message_summery_template)
-message_summery_chain = message_summery_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+message_summery_chain = (
+    message_summery_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+)
 
 select_context_template = """
 Question: {question}
@@ -169,11 +184,12 @@ Below are several excerpts from video transcripts. Each result is numbered and i
 {results}
 
 Please respond with only the number (1-{num_results}) of the result that is most relevant to the question. Do not include any additional text.
+If there is no relevant result return FALSE.
 """
 
 # Create the prompt template and chain.
 select_context_prompt = PromptTemplate.from_template(select_context_template)
-select_context_chain = select_context_prompt | gemini_2_flash_exp | StrOutputParser()
+select_context_chain = select_context_prompt | llm | StrOutputParser()
 
 search_query_template = """
 Check whether the QUESTION is directly related to studying or topic exclude general and vague terms like equation, explain it and expand it.
@@ -183,4 +199,6 @@ QUESTION:
 """
 
 search_query_prompt = PromptTemplate.from_template(search_query_template)
-search_query_chain = search_query_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+search_query_chain = (
+    search_query_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
+)
