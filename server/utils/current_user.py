@@ -59,9 +59,9 @@ async def handle_user_limits(user: User) -> bool:
         raise HTTPException(status_code=429, detail="Maximum token limit reached")
     today_message_count = await get_todays_message_count(user.id)
     if user.is_premium:
-        if today_message_count > CONFIG.premium_message_pre_day:
+        if today_message_count + 1 >= CONFIG.premium_message_pre_day:
             raise HTTPException(status_code=429, detail="Maximum message limit reached")
-    elif today_message_count > CONFIG.normal_message_pre_day:
+    elif today_message_count + 1 >= CONFIG.normal_message_pre_day:
         raise HTTPException(status_code=429, detail="Maximum message limit reached")
     if not user.is_allowed:
         raise HTTPException(status_code=400, detail="Your not allowed to access it.")
