@@ -22,7 +22,7 @@ class User(Document):
     total_token: int = 0
     is_allowed: bool = True
     auth_token: str = ""
-    is_premium: bool = None
+    is_premium: bool = False
 
     messages: Optional[List[Link[Message]]] = []
 
