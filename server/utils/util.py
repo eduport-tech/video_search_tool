@@ -163,7 +163,7 @@ def generate_history_summary(user_history: CurrentUserResponse = None):
     #   history.append({"role": "assistant", "content": message.answer, "timestamp": message.created_at})
 
     if user_history and user_history.messages:
-        summary = message_summery_chain.invoke({"history": user_history.messages[:20]})
+        summary = message_summery_chain.invoke({"history": user_history.messages[:10]})
     return summary
 
 
@@ -205,7 +205,7 @@ def generate_study_response(
             if video_topic:
                 search_query = {"topic": video_topic}
         context = cloud_embed_col.query(
-            query_texts=question, where=search_query, n_results=25
+            query_texts=question, where=search_query, n_results=10
         )
         processed_data = search_for_timestamp(context) if context else None
         if processed_data:

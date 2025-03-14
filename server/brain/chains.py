@@ -109,9 +109,7 @@ USER_INPUT:
 """
 
 validation_category_prompt = PromptTemplate.from_template(validation_category_template)
-validation_category_chain = (
-    validation_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
-)
+validation_category_chain = validation_category_prompt | llm | StrOutputParser()
 
 general_category_template = """
 Below is a USER_INPUT which is either a greeting from user or general question.
@@ -123,9 +121,7 @@ USER_INPUT:
 {user_input}
 """
 general_category_prompt = PromptTemplate.from_template(general_category_template)
-general_category_chain = (
-    general_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
-)
+general_category_chain = general_category_prompt | llm | StrOutputParser()
 
 eduport_category_template = """
 Below is context about Eduport your build by Eduport so always favor
@@ -157,9 +153,7 @@ USER_INPUT:
 {user_input}
 """
 eduport_category_prompt = PromptTemplate.from_template(eduport_category_template)
-eduport_category_chain = (
-    eduport_category_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
-)
+eduport_category_chain = eduport_category_prompt | llm | StrOutputParser()
 
 message_summery_template = """
 Below are the list of messages with question, answer and timestamp.
@@ -173,9 +167,7 @@ Message History:
 {history}
 """
 message_summery_prompt = PromptTemplate.from_template(message_summery_template)
-message_summery_chain = (
-    message_summery_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
-)
+message_summery_chain = message_summery_prompt | llm | StrOutputParser()
 
 select_context_template = """
 Question: {question}
@@ -193,12 +185,12 @@ select_context_chain = select_context_prompt | llm | StrOutputParser()
 
 search_query_template = """
 Check whether the QUESTION is directly related to studying or topic exclude general and vague terms like equation, explain it and expand it.
+Or the student directly asked for a video content.
+If the question is a topic or at least a full clarity question return YES
 Return YES else Return NO.
 QUESTION:
 {question}
 """
 
 search_query_prompt = PromptTemplate.from_template(search_query_template)
-search_query_chain = (
-    search_query_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
-)
+search_query_chain = search_query_prompt | llm | StrOutputParser()
