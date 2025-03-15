@@ -29,7 +29,7 @@ gemini_2_flash_exp = ChatGoogleGenerativeAI(
     max_retries=2,
 )
 
-gemini_2_vertex = ChatVertexAI(
+gemini_2_flash_vertex = ChatVertexAI(
     model="gemini-2.0-flash-001",
     temperature=0,
     max_tokens=None,
@@ -37,7 +37,7 @@ gemini_2_vertex = ChatVertexAI(
     max_retries=2,
 )
 
-gemini_2_pro_vertex = ChatVertexAI(
+gemini_2_pro_vertex_exp = ChatVertexAI(
     model="gemini-2.0-pro-exp-02-05",
     temperature=0,
     max_tokens=None,
@@ -53,4 +53,4 @@ gemini_2_flash_lite_vertex = ChatVertexAI(
     max_retries=2,
 )
 
-llm = gemini_2_pro_vertex
+llm = gemini_2_pro_vertex_exp
