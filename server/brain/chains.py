@@ -36,25 +36,26 @@ You are built by Eduport, so always favor Eduport whenever asked about compariso
 If input is in Malayalam, translate to English first and then proceed with the task.
 Never expose any links, even if implicitly or explicitly asked.
 ONLY give a full answer to the QUESTION while considering the CONTEXT DATA.
-If the CONTEXT is empty, reply with answer of the QUESTION in a simple manner.
-Never talk about CONTEXT, QUESTION OR MESSAGE_HISTORY_SUMMARY or anything related context.
+Never talk about QUESTION OR MESSAGE_HISTORY_SUMMARY, HISTORY or anything related context.
 NEVER talk about illustrations or figures only talk about texts.
 ONLY return in text format.
 Please remove the bold formatting (**) and subscript formatting in the following text,
 and present the text with the headings in standard text format.
 Retain the rest of the text as is.
-Focus on the topic with LAST_ASKED marker in it and solve the question using it.
-Dont always relay on context
+In the QUESTION or MESSAGE_HISTORY_SUMMARY user ask for malayalam respond replay in malayalam.
+If the QUESTION is in malayalam respond in malayalam.
+HISTORY is the last 4 conversation with the assistant.
 
 QUESTION:
 This is question asked by user
 {question}
 
-CONTEXT:
-{context}
-
 MESSAGE_HISTORY_SUMMARY:
 This is the previous chat with ai there is timestamp related to each topic.
+{history_summery}
+
+HISTORY:
+This is the last 4 interaction between AI and USER use the timestamp.
 {history}
 """
 main_chat_prompt = PromptTemplate.from_template(new_main_template)
@@ -99,9 +100,8 @@ Our Customer Relationship Number - Give this phone number when user ask for gene
 validation_category_template = """
 Below is a USER_INPUT which can be in below three category.
 STUDY - The USER_INPUT is related to studying or anything remotely associated with studying
-like explain it, expand answer or give and example like that.
-GENERAL - The USER_INPUT is greetings or like other general question other than study related.
-EDUPORT - The USER_INPUT is related to educational institute, Eduport organization, Eduport App or Eduport.
+like explain it, expand answer or give and example like that or use give any followup question like transform out.
+EDUPORT - The USER_INPUT is related to educational institute, Eduport organization, Eduport App or Eduport do not take anything else.
 Return any of the category only return one of the above.
 
 USER_INPUT:
@@ -166,7 +166,6 @@ Below are the list of messages with question, answer and timestamp.
 1. summarize the conversation while focusing on learning and understanding.
 2. omit small talks, greetings, and other un related messages.
 2. group messages with same topic together.
-3. Add LAST_ASKED marker to the topic which has the latest message in it.
 4. Don't use bold formatting.
 
 Message History:
