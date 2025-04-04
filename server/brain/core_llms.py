@@ -53,4 +53,4 @@ gemini_2_flash_lite_vertex = ChatVertexAI(
     max_retries=2,
 )
 
-llm = gemini_2_pro_vertex_exp
+llm = gemini_2_flash
