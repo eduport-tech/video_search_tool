@@ -18,14 +18,14 @@ class CurrentUserResponse(BaseModel):
 async def current_user(
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
-    is_premium: bool | None = Header(False),
+    x_is_premium: bool | None = Header(False),
 ) -> CurrentUserResponse:
     if x_user_id:
         user = await User.find(User.user_id == x_user_id).first_or_none()
         if user:
             _ = await handle_user_limits(user)
             _ = await update_user_details(
-                user=user, is_premium=is_premium, authorization=authorization
+                user=user, is_premium=x_is_premium, authorization=authorization
             )
             user_messages = await get_user_active_messages(user)
             return CurrentUserResponse(user=user, messages=user_messages)
