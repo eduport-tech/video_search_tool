@@ -100,7 +100,7 @@ Our Customer Relationship Number - Give this phone number when user ask for gene
 validation_category_template = """
 Below is a USER_INPUT which can be in below three category.
 STUDY - The USER_INPUT is related to studying or anything remotely associated with studying
-like explain it, expand answer or give and example like that or use give any followup question like transform out.
+like explain it, expand answer or give and example like that or use give any followup question like transform out and any general question belongs to this category.
 EDUPORT - The USER_INPUT is related to educational institute, Eduport organization, Eduport App or Eduport do not take anything else.
 Return any of the category only return one of the above.
 
