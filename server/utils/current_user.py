@@ -31,7 +31,7 @@ async def current_user(
             return CurrentUserResponse(user=user, messages=user_messages)
         else:
             starting_history = User(user_id=x_user_id)
-            auth_token = await make_auth_token(authorization) if authorization else None
+            auth_token = await make_auth_token(authorization) if authorization else ""
             starting_history.auth_token = auth_token
             await User.insert_one(starting_history)
             return CurrentUserResponse(user=starting_history, messages=[])
@@ -53,6 +53,8 @@ async def get_todays_message_count(user_id):
 
 
 async def handle_user_limits(user: User) -> bool:
+    if not user.is_allowed:
+        raise HTTPException(status_code=400, detail="Your not allowed to access it.")
     if user.is_premium and user.total_token > CONFIG.premium_token_limit:
         raise HTTPException(status_code=429, detail="Maximum token limit reached")
     elif user.total_token > CONFIG.normal_token_limit:
@@ -63,8 +65,6 @@ async def handle_user_limits(user: User) -> bool:
             raise HTTPException(status_code=429, detail="Maximum message limit reached")
     elif today_message_count + 1 >= CONFIG.normal_message_pre_day:
         raise HTTPException(status_code=429, detail="Maximum message limit reached")
-    if not user.is_allowed:
-        raise HTTPException(status_code=400, detail="Your not allowed to access it.")
     return False
 
 

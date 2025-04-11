@@ -157,14 +157,27 @@ def generate_eduport_response(question):
 def generate_history_summary(user_history: CurrentUserResponse = None):
     # history = []
     summary = ""
+    previous_history = []
 
-    # for message in user_history.messages[:10]:
-    #   history.append({"role": "user", "content": message.question, "timestamp": message.created_at})
-    #   history.append({"role": "assistant", "content": message.answer, "timestamp": message.created_at})
+    for message in user_history.messages[:4]:
+        previous_history.append(
+            {
+                "role": "user",
+                "content": message.question,
+                "timestamp": message.created_at,
+            }
+        )
+        previous_history.append(
+            {
+                "role": "assistant",
+                "content": message.answer,
+                "timestamp": message.created_at,
+            }
+        )
 
     if user_history and user_history.messages:
-        summary = message_summery_chain.invoke({"history": user_history.messages[:10]})
-    return summary
+        summary = message_summery_chain.invoke({"history": user_history.messages[4:15]})
+    return summary, previous_history
 
 
 def generate_context_response(contexts_data, question):
@@ -192,18 +205,24 @@ def find_video_topic(question, video_id):
 
 
 def generate_study_response(
-    question, user_history: CurrentUserResponse = None, video_id: str = None
+    question,
+    user_history: CurrentUserResponse = None,
+    video_id: str = None,
+    course_name: str = "",
 ):
     context = ""
     link = None
     search_query = None
-    history_summary = generate_history_summary(user_history)
+    history_summary, previous_history = generate_history_summary(user_history)
     is_video_search = search_query_chain.invoke({"question": question}).rstrip()
     if is_video_search == "YES":
         if video_id:
             video_topic = find_video_topic(question, video_id)
             if video_topic:
                 search_query = {"topic": video_topic}
+        if not search_query:
+            if course_name:
+                search_query = {"course_name": course_name}
         context = cloud_embed_col.query(
             query_texts=question, where=search_query, n_results=10
         )
@@ -215,14 +234,18 @@ def generate_study_response(
         {
             "context": context,
             "question": question,
-            "history": history_summary,
+            "history_summery": history_summary,
+            "history": previous_history,
         }
     )
     return generated_content, link
 
 
 def generate_response(
-    question, user_history: CurrentUserResponse = None, video_id: str = None
+    question,
+    user_history: CurrentUserResponse = None,
+    video_id: str = None,
+    course_name: str = "",
 ):
     with get_openai_callback() as cb:
         generated_content, link = None, None
@@ -236,7 +259,10 @@ def generate_response(
                 generated_content, link = generate_eduport_response(question)
             case "STUDY":
                 generated_content, link = generate_study_response(
-                    question, user_history, video_id
+                    question,
+                    user_history,
+                    video_id,
+                    course_name=course_name,
                 )
             case _:
                 generated_content, link = None, None
