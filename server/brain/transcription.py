@@ -19,6 +19,8 @@ def generate_transcription_data(audio_file):
     audio_base64 = b64encode(audio_file).decode("utf-8")
 
     audio_mime_type = get_mime_type_magic(audio_file)
+    if audio_mime_type == "video/webm":
+        audio_mime_type = "audio/webm"
     audio_input = {
         "type": "media",
         "mime_type": audio_mime_type,
