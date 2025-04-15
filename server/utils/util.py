@@ -7,10 +7,12 @@ from server.brain.chains import (
     message_summery_chain,
     select_context_chain,
     search_query_chain,
+    tool_router_chain,
 )
 from server.brain.vector_db import cloud_embed_col
 from server.utils.current_user import CurrentUserResponse
 from langchain_community.callbacks.manager import get_openai_callback
+from server.tools import execute_tool
 
 
 def select_best_context(results, question):
@@ -252,18 +254,26 @@ def generate_response(
         validated_category = validation_category_chain.invoke(
             {"user_input": question}
         ).rstrip()
-        match validated_category:
-            case "GENERAL":
-                generated_content, link = generate_general_response(question)
-            case "EDUPORT":
-                generated_content, link = generate_eduport_response(question)
-            case "STUDY":
-                generated_content, link = generate_study_response(
-                    question,
-                    user_history,
-                    video_id,
-                    course_name=course_name,
-                )
-            case _:
-                generated_content, link = None, None
+        tool_router_response = tool_router_chain.invoke(
+            {"user_question": question}
+        ).rstrip()
+        if tool_router_response != "None":
+            generated_content, link = execute_tool(
+                tool_router_response, {"user_input": question, "history": user_history}
+            )
+        else:
+            match validated_category:
+                case "GENERAL":
+                    generated_content, link = generate_general_response(question)
+                case "EDUPORT":
+                    generated_content, link = generate_eduport_response(question)
+                case "STUDY":
+                    generated_content, link = generate_study_response(
+                        question,
+                        user_history,
+                        video_id,
+                        course_name=course_name,
+                    )
+                case _:
+                    generated_content, link = None, None
         return generated_content, link, cb.total_tokens
