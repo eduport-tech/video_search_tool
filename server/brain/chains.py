@@ -205,3 +205,19 @@ search_query_prompt = PromptTemplate.from_template(search_query_template)
 search_query_chain = (
     search_query_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
 )
+
+tool_router_template = """
+You have access to the following tools:
+VIDEO_SEARCH: Search for videos in the system.
+QUESTION_GENERATOR: Generate practice questions for students.
+
+For the user question below, select the most appropriate tool from the list above.
+If the user question is not related to any of the provided tools, respond with "None".
+The USER QUESTION can be in english, malayalam and manglish.
+
+USER QUESTION: {user_question}
+
+TOOL:
+"""
+tool_router_prompt = PromptTemplate.from_template(tool_router_template)
+tool_router_chain = tool_router_prompt | gemini_2_flash_lite_vertex | StrOutputParser()

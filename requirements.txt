@@ -186,4 +186,5 @@ yarl==1.17.1
 zipp==3.20.2
 zstandard==0.23.0
 langchain-google-vertexai==2.0.14
-python-magic
+python-magic==0.4.27
+qdrant-client==1.13.3

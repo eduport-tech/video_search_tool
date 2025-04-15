@@ -20,6 +20,8 @@ class Settings(BaseModel):
     normal_message_pre_day: float = float(
         config("NORMAL_MESSAGE_PRE_DAY", default=float("inf"))
     )
+    qdrant_url: str = config("QDRANT_URL")
+    qdrant_api_key: str = config("QDRANT_API_KEY")
 
 
 CONFIG = Settings()
