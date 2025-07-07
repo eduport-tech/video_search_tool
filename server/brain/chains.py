@@ -153,6 +153,17 @@ Our Customer Relationship Number - Give this phone number when user ask for gene
 Our Website:
 https://eduport.app/
 
+[Residential Campuses]
+There are 5 campuses around kerala.
+Kozhikode:
+- Farook College: Farook HSS, Farook college, Ramanattukara, Pin:6673932
+- Mathara: Farhan hills, mathara mankavu, kozhikode, Pin:673014
+Malappuram:
+- Inkel City: @AIIC Inkel city Malappuram, karathode, Pin:676505
+- Kondotty: Escola international Kondotty, Malappuram, Pin:673638
+Thrissur:
+- Poomala: Poomala Dam Rd, Poomala, Killannur, Kerala, Pin:680581
+
 USER_INPUT:
 {user_input}
 """
