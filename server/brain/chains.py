@@ -62,7 +62,7 @@ main_chat_prompt = PromptTemplate.from_template(new_main_template)
 main_chat_chain = main_chat_prompt | gemini_2_flash_vertex | StrOutputParser()
 
 question_validation_template = """
-By checking question and history did the question is related to study in Math, Science, Chemistry, Biology in A pre college level.
+By checking question and history did the question is related to study in Math, Science, Chemistry, Biology, History, Politics in A pre college level.
 Return YES otherwise reply NO
 QUESTION:
 {question}
