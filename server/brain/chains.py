@@ -62,7 +62,7 @@ main_chat_prompt = PromptTemplate.from_template(new_main_template)
 main_chat_chain = main_chat_prompt | gemini_2_flash_vertex | StrOutputParser()
 
 question_validation_template = """
-By checking question and history did the question is related to study in Math, Science, Chemistry, Biology in A pre college level.
+By checking question and history did the question is related to study in Math, Science, Chemistry, Biology, History, Politics in A pre college level.
 Return YES otherwise reply NO
 QUESTION:
 {question}
@@ -152,6 +152,17 @@ Our Customer Relationship Number - Give this phone number when user ask for gene
 +917593822051
 Our Website:
 https://eduport.app/
+
+[Residential Campuses]
+There are 5 campuses around kerala.
+Kozhikode:
+- Farook College: Farook HSS, Farook college, Ramanattukara, Pin:6673932
+- Mathara: Farhan hills, mathara mankavu, kozhikode, Pin:673014
+Malappuram:
+- Inkel City: @AIIC Inkel city Malappuram, karathode, Pin:676505
+- Kondotty: Escola international Kondotty, Malappuram, Pin:673638
+Thrissur:
+- Poomala: Poomala Dam Rd, Poomala, Killannur, Kerala, Pin:680581
 
 USER_INPUT:
 {user_input}

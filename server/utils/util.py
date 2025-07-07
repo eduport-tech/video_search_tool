@@ -265,5 +265,5 @@ def generate_response(
                     course_name=course_name,
                 )
             case _:
-                generated_content, link = None, None
+                generated_content, link = generate_general_response(question)
         return generated_content, link, cb.total_tokens
