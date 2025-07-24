@@ -11,6 +11,7 @@ from server.brain.chains import (
 from server.brain.vector_db import cloud_embed_col
 from server.utils.current_user import CurrentUserResponse
 from langchain_community.callbacks.manager import get_openai_callback
+from server.data_stores.pdf_data import get_pdf_data
 
 
 def select_best_context(results, question):
@@ -229,6 +230,8 @@ def generate_study_response(
         processed_data = search_for_timestamp(context) if context else None
         if processed_data:
             context, link = generate_context_response(processed_data, question)
+    
+    pdf_data = get_pdf_data(question, course_name, history_summary)
 
     generated_content = main_chat_chain.invoke(
         {
@@ -236,6 +239,7 @@ def generate_study_response(
             "question": question,
             "history_summery": history_summary,
             "history": previous_history,
+            "text_content": pdf_data,
         }
     )
     return generated_content, link

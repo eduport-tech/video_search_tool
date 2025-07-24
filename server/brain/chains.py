@@ -4,6 +4,7 @@ from langchain_core.output_parsers import StrOutputParser
 from server.brain.core_llms import (
     gemini_2_flash_lite_vertex,
     gemini_2_flash_vertex,
+    gemini_2_5_flash_lite,
 )
 
 validation_template = """
@@ -57,9 +58,13 @@ This is the previous chat with ai there is timestamp related to each topic.
 HISTORY:
 This is the last 4 interaction between AI and USER use the timestamp.
 {history}
+
+TEXTBOOK:
+This content is from the relevant text book use this data to answer the provided QUESTION
+{text_content}
 """
 main_chat_prompt = PromptTemplate.from_template(new_main_template)
-main_chat_chain = main_chat_prompt | gemini_2_flash_vertex | StrOutputParser()
+main_chat_chain = main_chat_prompt | gemini_2_5_flash_lite | StrOutputParser()
 
 question_validation_template = """
 By checking question and history did the question is related to study in Math, Science, Chemistry, Biology, History, Politics in A pre college level.

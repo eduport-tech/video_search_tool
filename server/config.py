@@ -28,6 +28,9 @@ class Settings(BaseModel):
     r2_secret_access_key: str = config("R2_SECRET_ACCESS_KEY")
     r2_bucket_name: str = config("R2_BUCKET_NAME")
     r2_public_url: str = config("R2_PUBLIC_URL")
+    weaviate_url: str = config("WEAVIATE_URL")
+    weaviate_api_key: str = config("WEAVIATE_API_KEY")
+    weaviate_collection_name: str = config("WEAVIATE_COLLECTION")
 
 
 CONFIG = Settings()

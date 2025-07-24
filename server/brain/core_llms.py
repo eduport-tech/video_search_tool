@@ -51,6 +51,14 @@ gemini_2_flash_lite_vertex = ChatVertexAI(
     max_retries=2,
 )
 
+gemini_2_5_flash_lite = ChatVertexAI(
+    model="gemini-2.5-flash-lite",
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2,
+)
+
 gemini_client = genai.Client(vertexai=True,
                              project="eduport-staging",
                              location="global")

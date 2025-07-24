@@ -3,6 +3,10 @@
 # sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 import chromadb
+import weaviate
+from weaviate.classes.init import Auth
+
+from server.config import CONFIG
 
 # embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
@@ -32,3 +36,10 @@ import chromadb
 cloud_emb_store = chromadb.HttpClient(host='95.217.21.180', port=8005)
 # cloude_embd_col = cloude_emb_store.get_collection("timestamp_vdb")
 cloud_embed_col = cloud_emb_store.get_collection("Timestamped_Transcription_NEET_3")
+
+weaviate_client = weaviate.connect_to_weaviate_cloud(
+    cluster_url=CONFIG.weaviate_url,
+    auth_credentials=Auth.api_key(CONFIG.weaviate_api_key),
+)
+
+pdf_collection = weaviate_client.collections.get(CONFIG.weaviate_collection_name)
