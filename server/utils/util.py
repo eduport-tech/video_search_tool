@@ -232,6 +232,7 @@ def generate_study_response(
             context, link = generate_context_response(processed_data, question)
     
     pdf_data = get_pdf_data(question, course_name, history_summary)
+    print("Returned doc------->>>", pdf_data)
 
     generated_content = main_chat_chain.invoke(
         {
