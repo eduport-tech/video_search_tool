@@ -1,8 +1,8 @@
-from typing import Annotated, Optional, List
+from typing import Annotated, Optional, List, Literal
 from datetime import datetime
 
-from beanie import Document, Indexed, Link
-from pydantic import Field
+from beanie import Document, Indexed, Link, PydanticObjectId
+from pydantic import Field, BaseModel, ConfigDict
 
 
 class Message(Document):
@@ -11,6 +11,7 @@ class Message(Document):
     video_url: str | None = None
     token_count: int = 0
     is_cleared: bool = False
+    rating: Literal["LIKE", "DISLIKE", None] = None
     created_at: datetime = Field(default_factory=datetime.now)
     user: Link["User"] = Field(original_field="messages")
 
@@ -42,3 +43,20 @@ class User(Document):
     def created(self) -> datetime | None:
         """Datetime user was created from ID."""
         return self.id.generation_time if self.id else None
+
+
+class MessageView(BaseModel):
+    _id: PydanticObjectId #Added for backward compatibility remove after new version
+    id: PydanticObjectId
+    question: str
+    answer: str
+    video_url: str | None = None
+    token_count: int = 0
+    is_cleared: bool = False
+    rating: Literal["LIKE", "DISLIKE", None] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True
+    )

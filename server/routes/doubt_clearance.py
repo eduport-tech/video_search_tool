@@ -1,6 +1,6 @@
 """Doubt Clearance Route"""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import (APIRouter,
                      Depends,
@@ -8,11 +8,14 @@ from fastapi import (APIRouter,
                      BackgroundTasks,
                      HTTPException,
                      status,)
+from beanie import PydanticObjectId
 
 from server.utils.util import generate_response
 from server.brain.transcription import generate_transcription_data
 from server.utils.current_user import current_user
-from server.utils.memory_utils import add_generated_response_to_memory
+from server.utils.memory_utils import (add_generated_response_to_memory,
+                                       record_message_rating,
+                                       clear_user_message_history,)
 from server.utils.current_user import CurrentUserResponse
 
 
@@ -47,10 +50,10 @@ async def video_search_api(
             course_name=course_name,
         )
     if generated_content:
-        await add_generated_response_to_memory(
+        message = await add_generated_response_to_memory(
             generated_content, link, question, user_history.user, total_token
         )
-    return {"content": generated_content, "link": link}
+    return {"content": generated_content, "link": link, "id": str(message.id)}
 
 
 @router.post("/audio")
@@ -71,9 +74,7 @@ async def audio_transcription(audio_data: Annotated[bytes, File()],
 @router.post("/clear-history", status_code=200)
 async def clear_user_history(user_history: CurrentUserResponse = Depends(current_user)):
     if user_history.user:
-        for message in user_history.messages:
-            message.is_cleared = True
-            await message.save()
+        await clear_user_message_history(user_history)
     return {"details": "message cleared successfully"}
 
 
@@ -82,3 +83,20 @@ async def get_user_chat_history(
     user_history: CurrentUserResponse = Depends(current_user),
 ):
     return user_history.messages
+
+
+@router.post("/message-rating")
+async def post_message_rating(
+    message_id: str,
+    rating: Literal["LIKE", "DISLIKE", "NULL"],
+    user_history: CurrentUserResponse = Depends(current_user),
+):
+    try:
+        message_id = PydanticObjectId(message_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid message ID format")
+    
+    completed = await record_message_rating(message_id, rating)
+    if not completed:
+        return HTTPException(status_code=404, detail="Message not found")
+    return {"details": "rating posted successfully"}

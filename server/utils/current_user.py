@@ -6,13 +6,13 @@ from datetime import datetime, date
 from fastapi import Header, HTTPException
 from pydantic import BaseModel, Field
 
-from server.models.user import User, Message
+from server.models.user import User, Message, MessageView
 from server.config import CONFIG
 
 
 class CurrentUserResponse(BaseModel):
     user: User = Field(description="User Document Item")
-    messages: List[Message] = Field(description="List of messages of user")
+    messages: List[MessageView] = Field(description="List of messages of user")
 
 
 async def current_user(
@@ -88,9 +88,11 @@ async def make_auth_token(authorization: str):
 
 
 async def get_user_active_messages(user: User):
-    user_messages = (
-        await Message.find(Message.user.id == user.id, Message.is_cleared == False)
-        .sort(-Message.created_at)
-        .to_list()
-    )
-    return user_messages
+    pipeline = [
+        {"$match": {"user.$id": user.id, "is_cleared": False}},
+        {"$sort": {"created_at": -1}},
+        {"$addFields": {"_id": "$_id", "id": "$_id"}},
+        {"$project": {"user": 0}}
+    ]
+    user_messages_docs = await Message.aggregate(pipeline).to_list()
+    return [MessageView(**message) for message in user_messages_docs]
