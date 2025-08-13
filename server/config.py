@@ -27,6 +27,7 @@ class Settings(BaseModel):
     r2_access_key_id: str = config("R2_ACCESS_KEY_ID")
     r2_secret_access_key: str = config("R2_SECRET_ACCESS_KEY")
     r2_bucket_name: str = config("R2_BUCKET_NAME")
+    r2_image_bucket_name: str = config("R2_IMAGE_BUCKET_NAME")
     r2_public_url: str = config("R2_PUBLIC_URL")
 
 

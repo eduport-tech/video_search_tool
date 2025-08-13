@@ -12,8 +12,17 @@ class Message(Document):
     token_count: int = 0
     is_cleared: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
+    conversation: Link["Conversation"]
     user: Link["User"] = Field(original_field="messages")
 
+class Conversation(Document):
+    """Conversation Session Details"""
+    title: str = ""
+    is_deleted: bool = False
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    user: Link["User"]
 
 class AudioData(Document):
     """User Audio Data Details"""
@@ -26,6 +35,18 @@ class AudioData(Document):
     total_token_used: int = 0
     created_at: datetime = Field(default_factory=datetime.now)
     user: Link["User"] = Field(original_filed="audios")
+
+class ImageData(Document):
+    original_file_name: str = ""
+    is_allowed: bool = True
+    is_deleted: bool = False
+    url: str
+    mime_type: str = ""
+    file_size: int = 0
+    width: Optional[int] = None
+    height: Optional[int] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    user: Link["User"] = Field(original_field="images")
 
 class User(Document):
     """User Data and Message History"""
