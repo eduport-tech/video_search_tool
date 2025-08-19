@@ -80,15 +80,15 @@ def generate_vide_data(context_data):
     return data
 
 
-def generate_context_response(contexts_data, question):
-    correct_context = get_the_correct_context(contexts_data, question)
-    if correct_context != "FALSE":
-        link = generate_youtube_link(correct_context)
-        video_data = generate_vide_data(correct_context)
-    else:
-        link = None
-        video_data = "Can't find the video for your question."
-    return video_data, link
+# def generate_context_response(contexts_data, question):
+#     correct_context = get_the_correct_context(contexts_data, question)
+#     if correct_context != "FALSE":
+#         link = generate_youtube_link(correct_context)
+#         video_data = generate_vide_data(correct_context)
+#     else:
+#         link = None
+#         video_data = "Can't find the video for your question."
+#     return video_data, link
 
 
 def get_main_video_data(context):
@@ -265,5 +265,5 @@ def generate_response(
                     course_name=course_name,
                 )
             case _:
-                generated_content, link = None, None
+                generated_content, link = generate_general_response(question)
         return generated_content, link, cb.total_tokens

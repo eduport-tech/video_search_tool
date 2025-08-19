@@ -15,6 +15,18 @@ class Message(Document):
     user: Link["User"] = Field(original_field="messages")
 
 
+class AudioData(Document):
+    """User Audio Data Details"""
+    url: str = ""
+    is_allowed: bool = True
+    is_deleted: bool = False
+    usage_data: dict = {}
+    file_type: str = ""
+    transcribed_text: str = ""
+    total_token_used: int = 0
+    created_at: datetime = Field(default_factory=datetime.now)
+    user: Link["User"] = Field(original_filed="audios")
+
 class User(Document):
     """User Data and Message History"""
 

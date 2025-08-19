@@ -20,6 +20,14 @@ class Settings(BaseModel):
     normal_message_pre_day: float = float(
         config("NORMAL_MESSAGE_PRE_DAY", default=float("inf"))
     )
+    max_audio_token_limit: int = int(
+        config("MAX_AUDIO_LIMIT", default=10) * 1920
+    )
+    r2_endpoint_url: str = config("R2_ENDPOINT_URL")
+    r2_access_key_id: str = config("R2_ACCESS_KEY_ID")
+    r2_secret_access_key: str = config("R2_SECRET_ACCESS_KEY")
+    r2_bucket_name: str = config("R2_BUCKET_NAME")
+    r2_public_url: str = config("R2_PUBLIC_URL")
 
 
 CONFIG = Settings()

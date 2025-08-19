@@ -1,0 +1,38 @@
+# The base URL for the server. Defaults to http://localhost:8000 if not set.
+ROOT_URL="http://localhost:8000"
+
+# The MongoDB connection URI. This is a required field.
+MONGODB_URL=""
+
+# The environment the application is running in. Defaults to "DEV".
+ENVIRONMENT="DEV"
+
+# The token limit for normal users. Defaults to infinity.
+NORMAL_TOKEN_LIMIT="inf"
+
+# The token limit for premium users. Defaults to infinity.
+PREMIUM_TOKEN_LIMIT="inf"
+
+# The maximum number of messages per day for premium users. Defaults to infinity.
+PREMIUM_MESSAGE_PRE_DAY="inf"
+
+# The maximum number of messages per day for normal users. Defaults to infinity.
+NORMAL_MESSAGE_PRE_DAY="inf"
+
+# The maximum audio token limit. This value is multiplied by 1920. Defaults to 0.
+MAX_AUDIO_LIMIT=0
+
+# The R2 endpoint URL for object storage. This is a required field.
+R2_ENDPOINT_URL=""
+
+# The R2 access key ID. This is a required field.
+R2_ACCESS_KEY_ID=""
+
+# The R2 secret access key. This is a required field.
+R2_SECRET_ACCESS_KEY=""
+
+# The R2 bucket name. This is a required field.
+R2_BUCKET_NAME=""
+
+# The R2 public URL. This is a required field.
+R2_PUBLIC_URL=""

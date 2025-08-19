@@ -54,7 +54,7 @@ async def get_todays_message_count(user_id):
 
 async def handle_user_limits(user: User) -> bool:
     if not user.is_allowed:
-        raise HTTPException(status_code=400, detail="Your not allowed to access it.")
+        raise HTTPException(status_code=400, detail="Your input violates our guidelines. Please modify and try again.")
     if user.is_premium and user.total_token > CONFIG.premium_token_limit:
         raise HTTPException(status_code=429, detail="Maximum token limit reached")
     elif user.total_token > CONFIG.normal_token_limit:
@@ -62,9 +62,9 @@ async def handle_user_limits(user: User) -> bool:
     today_message_count = await get_todays_message_count(user.id)
     if user.is_premium:
         if today_message_count + 1 >= CONFIG.premium_message_pre_day:
-            raise HTTPException(status_code=429, detail="Maximum message limit reached")
+            raise HTTPException(status_code=429, detail="You've reached today's question limit! You can ask more questions tomorrow.")
     elif today_message_count + 1 >= CONFIG.normal_message_pre_day:
-        raise HTTPException(status_code=429, detail="Maximum message limit reached")
+        raise HTTPException(status_code=429, detail="You've reached today's question limit! You can ask more questions tomorrow.")
     return False
 
 

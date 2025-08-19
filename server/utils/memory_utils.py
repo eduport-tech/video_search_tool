@@ -1,6 +1,4 @@
 from server.models.user import Message, User
-from server.utils.current_user import CurrentUserResponse
-from typing import List
 
 
 async def add_generated_response_to_memory(generated_content, link, question,

@@ -2,7 +2,12 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File
+from fastapi import (APIRouter,
+                     Depends,
+                     File,
+                     BackgroundTasks,
+                     HTTPException,
+                     status,)
 
 from server.utils.util import generate_response
 from server.brain.transcription import generate_transcription_data
@@ -49,8 +54,17 @@ async def video_search_api(
 
 
 @router.post("/audio")
-def audio_transcription(audio_data: Annotated[bytes, File()]):
-    transcription = generate_transcription_data(audio_data)
+async def audio_transcription(audio_data: Annotated[bytes, File()],
+                              background_tasks: BackgroundTasks,
+                              user_id: Annotated[str, None] = None,
+                              user_token: Annotated[str, None] = None):
+    transcription = await generate_transcription_data(audio_data,
+                                                      background_tasks,
+                                                      user_id=user_id,
+                                                      user_token=user_token)
+    if not transcription:
+        return HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                             detail="Maximum audio length reached.")
     return transcription
 
 
