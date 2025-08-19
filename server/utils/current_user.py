@@ -100,6 +100,7 @@ async def get_user_active_messages(user: User):
     )
     return user_messages
 
+
 async def current_conversation(
         conversation_id: str = None,
         authorization: str | None = Header(None),
@@ -110,20 +111,18 @@ async def current_conversation(
         user = await User.find(User.user_id == x_user_id).first_or_none()
         if user:
             _ = await handle_user_limits(user)
-            # _ = await update_user_details(
-            #     user=user, is_premium=x_is_premium, authorization=authorization
-            # )
+            _ = await update_user_details(
+                user=user, is_premium=x_is_premium, authorization=authorization
+            )
             if not conversation_id:
                 conversation = await create_conversation(
                     user=user
                 )
             else:
                 conversation = await Conversation.find(Conversation.id == ObjectId(conversation_id)).first_or_none()
-                if not conversation or conversation.is_deleted==True:
+                if not conversation or conversation.is_deleted:
                     raise HTTPException(status_code=404, detail="Conversation not found.")
             
-            
-
             user_messages = await get_conversation_messages(conversation_id, user)
             return CurrentConversationResponse(user=user, messages=user_messages, conversation=conversation)
         else:
@@ -140,15 +139,18 @@ async def current_conversation(
             status_code=400, detail="The x-user-id and Authorization is required."
         )
     
+
 async def get_conversation_messages(conversation_id: str, user: User):
     conversation_messages = (
-        await Message.find(Message.conversation.id == ObjectId(conversation_id), Message.is_cleared == False, Message.user.id == user.id)
+        await Message.find(
+            Message.conversation.id == ObjectId(conversation_id),
+            Message.is_cleared == False, 
+            Message.user.id == user.id 
+            )
         .sort(-Message.created_at)
         .to_list()
     )
-    if not conversation_messages:
-        return []
-    return conversation_messages
+    return conversation_messages or []
 
 async def create_conversation(user: User, title: str = "New Chat"):
     conversation = Conversation(

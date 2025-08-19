@@ -1,24 +1,23 @@
 from pydantic import BaseModel
-from server.models.user import User, Message, Conversation
+from server.models.user import Message, Conversation
 
-class chatRequest(BaseModel):
+class ChatRequest(BaseModel):
     question: str
     course_name: str = ""
-
-
 
 class ChatResponse(BaseModel):
     content: str
     link: str | None
     conversation_id: str
 
-class ConversationMessages(BaseModel):
+class ConversationMessagesResponse(BaseModel):
     messages: list[Message]
 
-class ConversationsList(BaseModel):
+class ConversationsListResponse(BaseModel):
     conversations: list[Conversation]
 
 class DeleteConversationResponse(BaseModel):
+    conversation_id: str
     detail: str
 
 class ConversationClearResponse(BaseModel):

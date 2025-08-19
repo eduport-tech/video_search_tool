@@ -31,10 +31,8 @@ async def save_image_details(image_file, user_id, file_name, url, mime_type):
     """
     
     image = PILImage.open(BytesIO(image_file))
-    print(f"Image size: {image.size}, Format: {image.format}")
     width, height = image.size
     user = await User.find(User.user_id == user_id).first_or_none() if user_id else None
-    print(f"User found: {user}")
     image = ImageData(
         original_file_name=file_name,
         url = url,
@@ -45,7 +43,6 @@ async def save_image_details(image_file, user_id, file_name, url, mime_type):
         user=user,
     )
     await image.save()
-    print(f"Image saved with ID: {image.id}")
     return str(image.id)
 
 async def get_image_url(file_id: str):

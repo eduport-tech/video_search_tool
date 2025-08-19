@@ -13,17 +13,16 @@ class Message(Document):
     is_cleared: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
     conversation: Link["Conversation"]
-    user: Link["User"]
+    user: Link["User"] = Field(original_field="messages")
 
 class Conversation(Document):
-
+    """Conversation Session Details"""
     title: str = ""
     is_deleted: bool = False
+    is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     user: Link["User"]
-
-
 
 class AudioData(Document):
     """User Audio Data Details"""
@@ -41,7 +40,7 @@ class ImageData(Document):
     original_file_name: str = ""
     is_allowed: bool = True
     is_deleted: bool = False
-    url: str = ""
+    url: str
     mime_type: str = ""
     file_size: int = 0
     width: Optional[int] = None

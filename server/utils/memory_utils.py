@@ -26,12 +26,7 @@ async def get_conversations_by_user(user: User):
     conversations = await Conversation.find(Conversation.user.id == user.id, Conversation.is_deleted == False).to_list()
     return conversations
 
-async def delete_conversation_by_id(conversation_id: str, user: User):
-    conversation = await Conversation.find(Conversation.id == ObjectId(conversation_id), Conversation.user.id == user.id).first_or_none()
-    if not conversation:
-        return {"detail": "Conversation was not found."}
-    else:
-        conversation.is_deleted = True
-    print(conversation.is_deleted)
+async def delete_conversation_by_id(conversation: Conversation):
+    conversation.is_deleted = True
     await conversation.save()
-    return {"detail": "Conversation deleted successfully."}
+    return {"conversation_id": str(conversation.id) , "detail": "Conversation deleted successfully."}

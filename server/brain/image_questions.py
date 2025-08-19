@@ -4,7 +4,7 @@ import os
 import logging
 logger = logging.getLogger(__name__)
 
-async def save_uploaded_image(image_file, user_id, user_tocken, file_name):
+async def save_uploaded_image(image_file, user_id, user_token, file_name):
     try:
         mime_type = image_file.content_type
         content = await image_file.read()
