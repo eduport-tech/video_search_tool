@@ -12,7 +12,17 @@ class Message(Document):
     token_count: int = 0
     is_cleared: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
-    user: Link["User"] = Field(original_field="messages")
+    conversation: Link["Conversation"]
+    user: Link["User"]
+
+class Conversation(Document):
+
+    title: str = ""
+    is_deleted: bool = False
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    user: Link["User"]
+
 
 
 class AudioData(Document):

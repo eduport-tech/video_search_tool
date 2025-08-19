@@ -12,11 +12,12 @@ from fastapi import (APIRouter,
 
 from server.utils.util import generate_response
 from server.brain.transcription import generate_transcription_data
-from server.utils.current_user import current_user
-from server.utils.memory_utils import add_generated_response_to_memory
-from server.utils.current_user import CurrentUserResponse
+from server.utils.current_user import current_user, current_conversation
+from server.utils.memory_utils import add_generated_response_to_memory, get_conversations_by_user, delete_conversation_by_id
+from server.utils.current_user import CurrentUserResponse, CurrentConversationResponse
 from server.brain.image_questions import save_uploaded_image
 from server.utils.image_processing import get_image_url
+from server.models.conversation import ChatResponse, ConversationMessages, ConversationsList, DeleteConversationResponse, ConversationClearResponse, chatRequest
 
 
 router = APIRouter(tags=["Doubt Clearance"])
@@ -106,3 +107,65 @@ async def get_user_chat_history(
     user_history: CurrentUserResponse = Depends(current_user),
 ):
     return user_history.messages
+
+@router.post("/chat", response_model=ChatResponse)
+async def doubt_clearance_chat(
+    chat_request: chatRequest,
+    user_history: CurrentConversationResponse = Depends(current_conversation),
+):
+    generated_content, link, total_token = generate_response(
+        chat_request.question,
+        user_history=user_history,
+        course_name=chat_request.course_name,
+    )
+    if generated_content:
+        await add_generated_response_to_memory(
+            generated_content, link, chat_request.question, user_history.user, total_token, conversation_id=user_history.conversation.id
+        )
+    # return {"content": generated_content, "link": link, "conversation_id": str(user_history.conversation.id)}
+    return ChatResponse(
+        content=generated_content,
+        link=link,
+        conversation_id=str(user_history.conversation.id),)
+
+@router.get("/conversation/{conversation_id}", response_model=ConversationMessages)
+async def get_conversation(
+    user_history: CurrentUserResponse = Depends(current_conversation),
+):
+    conversation_messages = user_history.messages
+    
+    return {
+        "messages": conversation_messages,
+    }
+
+@router.get("/conversations", response_model=ConversationsList)
+async def get_all_conversations(
+    user_history: CurrentUserResponse = Depends(current_user),
+):
+    
+    conversations = await get_conversations_by_user(user_history.user)
+    
+    return {"conversations": conversations}
+
+@router.delete("/conversation/{conversation_id}", response_model=DeleteConversationResponse)
+async def delete_conversation(
+    user_history: CurrentUserResponse = Depends(current_conversation),
+):
+    try:
+        response = await delete_conversation_by_id(user_history.conversation.id, user_history.user)
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found or already deleted.") from e
+    
+@router.post("/conversation/clear/{conversation_id}", response_model=ConversationClearResponse)
+async def clear_conversation(
+    user_history: CurrentConversationResponse = Depends(current_conversation),
+):
+    if not user_history.conversation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found.")
+    
+    for message in user_history.messages:
+        message.is_cleared = True
+        await message.save()
+    
+    return {"detail": "Conversation cleared successfully."}

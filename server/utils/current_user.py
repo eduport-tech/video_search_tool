@@ -2,11 +2,12 @@
 
 from typing import List
 from datetime import datetime, date
+from bson import ObjectId
 
 from fastapi import Header, HTTPException
 from pydantic import BaseModel, Field
 
-from server.models.user import User, Message
+from server.models.user import User, Message, Conversation
 from server.config import CONFIG
 
 
@@ -14,6 +15,10 @@ class CurrentUserResponse(BaseModel):
     user: User = Field(description="User Document Item")
     messages: List[Message] = Field(description="List of messages of user")
 
+class CurrentConversationResponse(BaseModel):
+    user: User = Field(description="User Document Item")
+    messages: List[Message] = Field(description="List of messages in the conversation")
+    conversation: Conversation = Field(description="Conversation Document Item")
 
 async def current_user(
     authorization: str | None = Header(None),
@@ -94,3 +99,62 @@ async def get_user_active_messages(user: User):
         .to_list()
     )
     return user_messages
+
+async def current_conversation(
+        conversation_id: str = None,
+        authorization: str | None = Header(None),
+        x_user_id: str | None = Header(None),
+        x_is_premium: bool | None = Header(False),
+):
+    if x_user_id:
+        user = await User.find(User.user_id == x_user_id).first_or_none()
+        if user:
+            _ = await handle_user_limits(user)
+            # _ = await update_user_details(
+            #     user=user, is_premium=x_is_premium, authorization=authorization
+            # )
+            if not conversation_id:
+                conversation = await create_conversation(
+                    user=user
+                )
+            else:
+                conversation = await Conversation.find(Conversation.id == ObjectId(conversation_id)).first_or_none()
+                if not conversation or conversation.is_deleted==True:
+                    raise HTTPException(status_code=404, detail="Conversation not found.")
+            
+            
+
+            user_messages = await get_conversation_messages(conversation_id, user)
+            return CurrentConversationResponse(user=user, messages=user_messages, conversation=conversation)
+        else:
+            starting_history = User(user_id=x_user_id) 
+            auth_token = await make_auth_token(authorization) if authorization else ""
+            starting_history.auth_token = auth_token
+            await User.insert_one(starting_history)
+            conversation = await create_conversation(
+                    user=starting_history
+                )
+            return CurrentConversationResponse(user=starting_history, messages=[], conversation=conversation)
+    else:
+        raise HTTPException(
+            status_code=400, detail="The x-user-id and Authorization is required."
+        )
+    
+async def get_conversation_messages(conversation_id: str, user: User):
+    conversation_messages = (
+        await Message.find(Message.conversation.id == ObjectId(conversation_id), Message.is_cleared == False, Message.user.id == user.id)
+        .sort(-Message.created_at)
+        .to_list()
+    )
+    if not conversation_messages:
+        return []
+    return conversation_messages
+
+async def create_conversation(user: User, title: str = "New Chat"):
+    conversation = Conversation(
+        title=title,
+        user=user,
+        is_deleted=False
+    )
+    await conversation.save()
+    return conversation
