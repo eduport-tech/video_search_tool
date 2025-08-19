@@ -11,6 +11,10 @@ from server.brain.chains import (
 from server.brain.vector_db import cloud_embed_col
 from server.utils.current_user import CurrentUserResponse
 from langchain_community.callbacks.manager import get_openai_callback
+from server.brain.core_llms import gemini_client
+from server.brain.agents import get_gemini_config
+from server.utils.gemini_utils import generate_gemini_contents
+from server.brain.prompts import generate_study_prompt
 
 
 def select_best_context(results, question):
@@ -252,18 +256,24 @@ def generate_response(
         validated_category = validation_category_chain.invoke(
             {"user_input": question}
         ).rstrip()
-        match validated_category:
-            case "GENERAL":
-                generated_content, link = generate_general_response(question)
-            case "EDUPORT":
-                generated_content, link = generate_eduport_response(question)
-            case "STUDY":
-                generated_content, link = generate_study_response(
-                    question,
-                    user_history,
-                    video_id,
-                    course_name=course_name,
-                )
-            case _:
-                generated_content, link = generate_general_response(question)
-        return generated_content, link, cb.total_tokens
+        # match validated_category:
+            # case "GENERAL":
+            #     generated_content, link = generate_general_response(question)
+            # case "EDUPORT":
+            #     generated_content, link = generate_eduport_response(question)
+            # case "STUDY":
+            #     generated_content, link = generate_study_response(
+            #         question,
+            #         user_history,
+            #         video_id,
+            #         course_name=course_name,
+            #     )
+            # case _:
+            #     generated_content, link = generate_general_response(question)
+        link = None
+        generated_content = gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            config=get_gemini_config(generate_study_prompt()),
+            contents=generate_gemini_contents(question, user_history.messages[:4]),
+        )
+        return generated_content.text, link, generated_content.usage_metadata.total_token_count
