@@ -5,6 +5,7 @@ import boto3
 from server.config import CONFIG
 import logging
 from bson import ObjectId
+from server.models.images import ImageDetailsResponse
 logger = logging.getLogger(__name__)
 
 async def save_image_to_r2(image_file, extension, file_name):
@@ -50,19 +51,7 @@ async def get_image_url(file_id: str):
     Retrieve the image details from the database using file_id.
     """
     image = await ImageData.find(ImageData.id == ObjectId(file_id)).first_or_none()
+    response = None
     if image:
-        response = {
-            "status": "success",
-            "url": image.url,
-            "file_id": str(image.id),
-            "mime_type": image.mime_type,
-            "file_size": image.file_size,
-            "dimensions": {
-                "width": image.width,
-                "height": image.height
-            },
-            "original_file_name": image.original_file_name
-        }
-    else:
-        return None
+        response = ImageDetailsResponse.from_image_data(image)
     return response
