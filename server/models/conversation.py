@@ -3,6 +3,7 @@ from server.models.user import Message, Conversation
 
 class ChatRequest(BaseModel):
     question: str
+    image_id: str | None = None
     course_name: str = ""
 
 class ChatResponse(BaseModel):

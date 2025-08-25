@@ -26,32 +26,31 @@ async def save_image_to_r2(image_file, extension, file_name):
         logger.error(f"Error uploading to R2: {e}")
         return None
 
-async def save_image_details(image_file, user_id, file_name, url, mime_type):
+async def save_image_details(image_file, user_id, file_name, url, mime_type, token_usage):
     """
     Add image details to the database.
     """
-    
-    image = PILImage.open(BytesIO(image_file))
-    width, height = image.size
+    pil_image = PILImage.open(BytesIO(image_file))
+    width, height = pil_image.size
     user = await User.find(User.user_id == user_id).first_or_none() if user_id else None
-    image = ImageData(
+    image_data = ImageData(
         original_file_name=file_name,
         url = url,
         mime_type=mime_type,
         file_size= len(image_file),
         width=width,
         height=height,
+        token_usage=token_usage,
         user=user,
     )
-    await image.save()
-    return str(image.id)
+    await image_data.save()
+    return str(image_data.id)
 
 async def get_image_url(file_id: str):
     """
     Retrieve the image details from the database using file_id.
     """
     image = await ImageData.find(ImageData.id == ObjectId(file_id)).first_or_none()
-    response = None
     if image:
-        response = ImageDetailsResponse.from_image_data(image)
-    return response
+        return ImageDetailsResponse.from_image_data(image)
+    return None

@@ -7,7 +7,9 @@ from pydantic import Field
 
 class Message(Document):
     question: str
+    image_id: Optional[str] = None
     answer: str
+    thought_summary: str = ""
     video_url: str | None = None
     token_count: int = 0
     is_cleared: bool = False
@@ -45,6 +47,7 @@ class ImageData(Document):
     file_size: int = 0
     width: Optional[int] = None
     height: Optional[int] = None
+    token_usage: int = 0
     created_at: datetime = Field(default_factory=datetime.now)
     user: Link["User"] = Field(original_field="images")
 
