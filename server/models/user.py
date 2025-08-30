@@ -27,6 +27,18 @@ class AudioData(Document):
     created_at: datetime = Field(default_factory=datetime.now)
     user: Link["User"] = Field(original_filed="audios")
 
+class ImageData(Document):
+    original_file_name: str = ""
+    is_allowed: bool = True
+    is_deleted: bool = False
+    url: str = ""
+    mime_type: str = ""
+    file_size: int = 0
+    width: Optional[int] = None
+    height: Optional[int] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    user: Link["User"] = Field(original_field="images")
+
 class User(Document):
     """User Data and Message History"""
 

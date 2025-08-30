@@ -7,13 +7,16 @@ from fastapi import (APIRouter,
                      File,
                      BackgroundTasks,
                      HTTPException,
-                     status,)
+                     status,
+                     UploadFile)
 
 from server.utils.util import generate_response
 from server.brain.transcription import generate_transcription_data
 from server.utils.current_user import current_user
 from server.utils.memory_utils import add_generated_response_to_memory
 from server.utils.current_user import CurrentUserResponse
+from server.brain.image_questions import save_uploaded_image
+from server.utils.image_processing import get_image_url
 
 
 router = APIRouter(tags=["Doubt Clearance"])
@@ -67,6 +70,27 @@ async def audio_transcription(audio_data: Annotated[bytes, File()],
                              detail="Maximum audio length reached.")
     return transcription
 
+@router.post("/upload/image_upload")
+async def image_upload(file: UploadFile = File(...),
+                       user_history: CurrentUserResponse = Depends(current_user),
+                       user_token: Annotated[str, None] = None):
+    if not file:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="No file uploaded.")
+    return await save_uploaded_image(
+        image_file=file,
+        user_id=user_history.user.user_id,
+        user_tocken=user_token,
+        file_name=file.filename
+    )
+
+@router.get("/files/uploaded_images/{file_id}")
+async def get_uploaded_image(file_id: str):
+    response = await get_image_url(file_id)
+    if not response:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Image not found.")
+    return response
 
 @router.post("/clear-history", status_code=200)
 async def clear_user_history(user_history: CurrentUserResponse = Depends(current_user)):
