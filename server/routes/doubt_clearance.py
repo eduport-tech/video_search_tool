@@ -7,13 +7,14 @@ from fastapi import (APIRouter,
                      File,
                      BackgroundTasks,
                      HTTPException,
-                     status,)
+                     status)
 
 from server.utils.util import generate_response
 from server.brain.transcription import generate_transcription_data
 from server.utils.current_user import current_user
 from server.utils.memory_utils import add_generated_response_to_memory
 from server.utils.current_user import CurrentUserResponse
+from server.services.redis_cache import redis_dep, get_class
 
 
 router = APIRouter(tags=["Doubt Clearance"])
@@ -31,8 +32,11 @@ async def video_search_api(
     video_id: int = None,
     course_name: str = "",
     user_history: CurrentUserResponse = Depends(current_user),
+    r = Depends(redis_dep) 
 ):
 
+    class_info = await get_class(r,course_name)
+    print(class_info)
     if type == "subtopic":
         generated_content, link, total_token = generate_response(
             question,
@@ -45,6 +49,7 @@ async def video_search_api(
             question,
             user_history=user_history,
             course_name=course_name,
+            class_info=class_info,
         )
     if generated_content:
         await add_generated_response_to_memory(
