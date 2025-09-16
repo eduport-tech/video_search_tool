@@ -5,6 +5,7 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 from starlette.middleware.cors import CORSMiddleware
 import sentry_sdk
+from redis.asyncio import Redis
 
 from server.config import CONFIG
 from server.models.user import User, Message, AudioData
@@ -32,8 +33,15 @@ async def lifespan(app: FastAPI):
     """Initialize application service"""
     app.db = AsyncIOMotorClient(CONFIG.mongo_uri).doubt_clearance
     await init_beanie(app.db, document_models=[User, Message, AudioData])
+    app.state.redis = Redis(
+        host=CONFIG.redis_host,
+        port=CONFIG.redis_port,
+        decode_responses=True,
+        max_connections=10
+    )
     print("Startup Complete")
     yield
+    await app.state.redis.close()
     print("Shutdown complete")
 
 app = FastAPI(

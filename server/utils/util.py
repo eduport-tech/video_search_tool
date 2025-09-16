@@ -209,6 +209,7 @@ def generate_study_response(
     user_history: CurrentUserResponse = None,
     video_id: str = None,
     course_name: str = "",
+    class_info: str = "Class 1-12 Kerala State Board",
 ):
     context = ""
     link = None
@@ -232,7 +233,7 @@ def generate_study_response(
 
     generated_content = main_chat_chain.invoke(
         {
-            "context": context,
+            "class_info": class_info,
             "question": question,
             "history_summery": history_summary,
             "history": previous_history,
@@ -246,6 +247,7 @@ def generate_response(
     user_history: CurrentUserResponse = None,
     video_id: str = None,
     course_name: str = "",
+    class_info: str = "",
 ):
     with get_openai_callback() as cb:
         generated_content, link = None, None
@@ -263,6 +265,7 @@ def generate_response(
                     user_history,
                     video_id,
                     course_name=course_name,
+                    class_info=class_info,
                 )
             case _:
                 generated_content, link = generate_general_response(question)
