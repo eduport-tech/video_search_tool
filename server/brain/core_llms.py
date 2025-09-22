@@ -1,6 +1,7 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_vertexai import ChatVertexAI
 from google import genai
+from google.genai import types
 
 
 # llama_3 = ChatGroq(
@@ -54,5 +55,17 @@ gemini_2_flash_lite_vertex = ChatVertexAI(
 gemini_client = genai.Client(vertexai=True,
                              project="eduport-staging",
                              location="global")
+
+def gemini_2_5_flash(system_instruction: str, contents: list):
+    response = gemini_client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=contents,
+        config = types.GenerateContentConfig(
+            temperature=0,
+            system_instruction=system_instruction,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
+        )
+    )
+    return response
 
 llm = gemini_2_flash

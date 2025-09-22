@@ -28,6 +28,7 @@ class Settings(BaseModel):
     r2_secret_access_key: str = config("R2_SECRET_ACCESS_KEY")
     r2_bucket_name: str = config("R2_BUCKET_NAME")
     r2_public_url: str = config("R2_PUBLIC_URL")
-
+    redis_host: str = config("REDIS_HOST", default="localhost")
+    redis_port: int = int(config("REDIS_PORT", default=6379))
 
 CONFIG = Settings()
