@@ -14,6 +14,9 @@ from server.brain.transcription import generate_transcription_data
 from server.utils.current_user import current_user
 from server.utils.memory_utils import add_generated_response_to_memory
 from server.utils.current_user import CurrentUserResponse
+from server.utils.explaination_utils import fetch_explanation_for_qa
+from server.models.qa_explanation import QuestionNAnswer, ExplanationResponse
+from server.services.redis import redis_dep
 
 
 router = APIRouter(tags=["Doubt Clearance"])
@@ -82,3 +85,11 @@ async def get_user_chat_history(
     user_history: CurrentUserResponse = Depends(current_user),
 ):
     return user_history.messages
+
+
+@router.post("/generate-explanation", response_model=ExplanationResponse)
+async def generate_explanation(question_answer: QuestionNAnswer,
+                                redis = Depends(redis_dep)
+                                ):
+    explanation = await fetch_explanation_for_qa(question_answer,redis)
+    return {"explanation": explanation}

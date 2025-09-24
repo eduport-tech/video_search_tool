@@ -4,6 +4,7 @@ from langchain_core.output_parsers import StrOutputParser
 from server.brain.core_llms import (
     gemini_2_flash_lite_vertex,
     gemini_2_flash_vertex,
+    gemini_2_5_flash,
 )
 
 validation_template = """
@@ -216,3 +217,45 @@ search_query_prompt = PromptTemplate.from_template(search_query_template)
 search_query_chain = (
     search_query_prompt | gemini_2_flash_lite_vertex | StrOutputParser()
 )
+
+def fetch_explanation(
+        contents: list
+):
+    system_instruction = """
+    You will receive a question, its options, and the correct answer in HTML format.
+    1. Read and understand the question and options.
+    2. Give a short, clear explanation for why the correct answer is right.
+    3. Use plain text only. If equations are needed, write them in LaTeX (surrounded by $...$).
+    4. Do not include any HTML tags or formatting in your response.
+    5. Your explanation must be strictly under 80 words.
+    6. Do not mention the options or restate the question; focus only on explaining the answer.
+
+    Examples:
+    Example 1:
+    Question:
+    The total number of secondary hydrogen present in 3,3‐diethylpentane is      
+    Options:
+    1. 8
+    2. 9
+    3. 10
+    4. 12
+    Answer: 1
+    
+    Explanation: 3,3-diethylpentane has the structure $CH_3CH_2C(CH_2CH_3)_2CH_2CH_3$. There are four secondary carbon atoms: the two $CH_2$ groups in the main chain (at positions 2 and 4) and the two $CH_2$ groups of the ethyl branches. Each secondary carbon has two hydrogen atoms, so $4 \\times 2 = 8$ secondary hydrogens.
+
+    Example 2:
+    Question:
+    Which of the following statement is correct?
+    Options:
+    1. In an elastic collision of two bodies the total momentum and energy of bodies is conserved
+    2. Total energy of the system is always conserved no matter what internal and external forces on the body are present
+    3. Work done in the motion of a body over a closed loop is zero for very very force in nature.
+    4. In an inelastic collision, the final kinetic energy is always less than the intial kinetic energy of the system
+    Answer: 2
+
+    Explanation: An elastic collision is defined by the conservation of both the total momentum and the total kinetic energy of the colliding bodies. In such a collision, no kinetic energy is lost to other forms of energy like heat or sound.
+    (Note: here option 1 is the actual correct answer, hence the actual answer is explained gracefully without mentioning the option number.)
+    """
+    response = gemini_2_5_flash(system_instruction, contents)
+    return response
+
