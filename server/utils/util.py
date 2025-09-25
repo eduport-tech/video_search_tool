@@ -274,7 +274,8 @@ def generate_response(
 
 async def generate_image_response(
     question,
-    image_id: str | None = None,
+    image_url: str | None = None,
+    image_mime_type: str | None = None,
     user_history: CurrentConversation = None,
     video_id: str = None,
     course_name: str = "",
@@ -293,7 +294,8 @@ async def generate_image_response(
             case "STUDY":
                 generated_content, thought, total_token, link = await generate_image_study_response(
                     question,
-                    image_id=image_id,
+                    image_url=image_url,
+                    image_mime_type=image_mime_type,
                     user_history = user_history,
                     video_id = video_id,
                     course_name=course_name,
@@ -305,7 +307,8 @@ async def generate_image_response(
 
 async def generate_image_study_response(
     question,
-    image_id: str | None = None,
+    image_url: str | None = None,
+    image_mime_type: str | None = None,
     user_history: CurrentConversation = None,
     video_id: str = None,
     course_name: str = "",
@@ -332,7 +335,8 @@ async def generate_image_study_response(
 
     sys_instruction, contents = await generate_prompt_contents(
         question=question,
-        image_id=image_id,
+        image_url=image_url,
+        image_mime_type=image_mime_type,
         previous_history=previous_history,
     )
     generated_content, thought,total_token = await generate_gemini_response(sys_instruction, contents)

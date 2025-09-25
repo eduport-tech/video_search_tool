@@ -3,11 +3,13 @@ from server.models.user import Message, Conversation
 
 class ChatRequest(BaseModel):
     question: str
-    image_id: str | None = None
+    image_url: str | None = None
+    image_mime_type: str | None = None
     course_name: str = ""
 
 class ChatResponse(BaseModel):
     content: str
+    image: str | None
     link: str | None
     conversation_id: str
 

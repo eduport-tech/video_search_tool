@@ -98,8 +98,8 @@ async def get_user_active_messages(user: User):
     return user_messages
 
 async def current_conversation_user(
+        x_user_id: str,
         authorization: str | None = Header(None),
-        x_user_id: str | None = Header(None),
         x_is_premium: bool | None = Header(False),
 )-> CurrentUser:
     if x_user_id:

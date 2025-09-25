@@ -26,7 +26,7 @@ async def save_uploaded_image(image_file, user_id, file_name):
         
         file_id = await save_image_details(content, user_id, file_name, url, mime_type, token_usage)
         
-        return {"status": "success", "url": url, "file_id": file_id}
+        return {"status": "success", "url": url, "mime_type": mime_type, "file_id": file_id}
         
     except Exception as e:
         logger.error(f"Error saving uploaded image: {e}")
@@ -34,7 +34,8 @@ async def save_uploaded_image(image_file, user_id, file_name):
     
 async def generate_prompt_contents(
     question: str,
-    image_id: str | None = None,
+    image_url: str | None = None,
+    image_mime_type: str | None = None,
     previous_history: list = None,):
     sys_instruction = """
     <OBJECTIVE_AND_PERSONA>
@@ -70,10 +71,9 @@ async def generate_prompt_contents(
     """
     if question == "": question = "answer"
     question_part = [types.Content(role="user",parts=[types.Part.from_text(text=question)])]
-    if image_id:
-        image = await get_image_url(image_id)
-        image_bytes = requests.get(image.url).content
-        question_part.append(types.Content(role = "user",parts = [types.Part.from_bytes(data=image_bytes, mime_type=image.mime_type)]))
+    if image_url and image_mime_type:
+        image_bytes = requests.get(image_url).content
+        question_part.append(types.Content(role = "user",parts = [types.Part.from_bytes(data=image_bytes, mime_type=image_mime_type)]))
         
     contents = [*previous_history, *question_part] if previous_history else [*question_part]
     return sys_instruction, contents
@@ -82,10 +82,9 @@ async def generate_image_history_summary(user_history: CurrentConversation = Non
     previous_history = []
     for message in reversed(user_history.messages):
         previous_history.append(types.Content(role="user",parts=[types.Part.from_text(text=message.question)]))
-        if message.image_id:
-            image = await get_image_url(message.image_id)
-            image_bytes = requests.get(image.url).content
-            previous_history.append(types.Content(role = "user",parts=[types.Part.from_bytes(data=image_bytes, mime_type=image.mime_type)]))
+        if message.image_url and message.image_mime_type:
+            image_bytes = requests.get(message.image_url).content
+            previous_history.append(types.Content(role = "user",parts=[types.Part.from_bytes(data=image_bytes, mime_type=message.image_mime_type)]))
         previous_history.append(
             types.Content(role="model", parts=[types.Part.from_text(text=message.answer)])
         )
