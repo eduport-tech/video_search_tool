@@ -12,12 +12,13 @@ from server.utils.memory_utils import (add_generated_response_to_memory,
                                        get_conversations_by_user,
                                        delete_conversation_by_id,
                                        change_conversation_title)
+from server.utils.image_processing import get_image_url
 from server.models.conversation import (ChatResponse, 
                                         ConversationMessagesResponse, 
                                         ConversationsListResponse, 
                                         DeleteConversationResponse, 
                                         ConversationClearResponse, 
-                                        ChatRequest)
+                                        ChatRequest,)
 
 
 router = APIRouter(tags=["Conversation"])
@@ -28,10 +29,15 @@ async def doubt_clearance_chat(
     current_user: CurrentUser = Depends(current_conversation_user),
     current_conversation: CurrentConversation = Depends(current_conversation),
 ):
+    image_url, image_mime_type = None, None
+    if chat_request.image_id:
+        image = await get_image_url(chat_request.image_id)
+        image_url = image.url
+        image_mime_type = image.mime_type
     generated_content, thought, link, total_token = await generate_image_response(
         chat_request.question,
-        image_url=chat_request.image_url,
-        image_mime_type=chat_request.image_mime_type,
+        image_url=image_url,
+        image_mime_type=image_mime_type,
         user_history=current_conversation,
         course_name=chat_request.course_name,
     )
@@ -45,15 +51,15 @@ async def doubt_clearance_chat(
             current_user,
             total_token,
             conversation=current_conversation.conversation,
-            image_url=chat_request.image_url,
-            image_mime_type=chat_request.image_mime_type,
+            image_id=chat_request.image_id,
+            image_url=image_url,
+            image_mime_type=image_mime_type,
             thought_summary=thought,
         )
     else:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Failed to generate response.")
     return {"content": generated_content,
-            "image": chat_request.image_url,
             "link": link,
             "conversation_id": str(current_conversation.conversation.id)}
 

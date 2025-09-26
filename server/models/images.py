@@ -9,7 +9,6 @@ class Dimensions(BaseModel):
 class ImageUploadResponse(BaseModel):
     status: str
     url: str
-    mime_type: str
     file_id: str
 
 class ImageDetailsResponse(BaseModel):

@@ -1,4 +1,4 @@
-from server.models.user import Message, User, Conversation
+from server.models.user import Message, User, Conversation, ImageDetails
 from server.utils.util import generate_conversation_title
 
 async def add_generated_response_to_memory(generated_content, link, question,
@@ -6,15 +6,16 @@ async def add_generated_response_to_memory(generated_content, link, question,
                                            total_token_used: int = None,
                                            search_type: str = None,
                                            conversation: Conversation = None,
+                                           image_id: str= None,
                                            image_url: str= None,
                                            image_mime_type: str = None,
                                            thought_summary: str = "",):
     is_message_hidden = False
     if search_type == "subtopic":
         is_message_hidden = True
+    image_details = ImageDetails(image_id=image_id, image_url=image_url, image_mime_type=image_mime_type)
     new_message = Message(question=question,
-                        image_url=image_url,
-                        image_mime_type=image_mime_type,
+                        image_details= image_details,
                         answer=generated_content,
                         thought_summary=thought_summary,
                         video_url=link,

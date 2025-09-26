@@ -4,7 +4,7 @@ import requests
 from google.genai import types
 
 from server.brain.core_llms import gemini_client
-from server.utils.image_processing import save_image_details, save_image_to_r2, get_image_url
+from server.utils.image_processing import save_image_details, save_image_to_r2
 from server.utils.current_conversation import CurrentConversation
 
 import logging
@@ -26,7 +26,7 @@ async def save_uploaded_image(image_file, user_id, file_name):
         
         file_id = await save_image_details(content, user_id, file_name, url, mime_type, token_usage)
         
-        return {"status": "success", "url": url, "mime_type": mime_type, "file_id": file_id}
+        return {"status": "success", "url": url, "file_id": file_id}
         
     except Exception as e:
         logger.error(f"Error saving uploaded image: {e}")
@@ -82,9 +82,9 @@ async def generate_image_history_summary(user_history: CurrentConversation = Non
     previous_history = []
     for message in reversed(user_history.messages):
         previous_history.append(types.Content(role="user",parts=[types.Part.from_text(text=message.question)]))
-        if message.image_url and message.image_mime_type:
-            image_bytes = requests.get(message.image_url).content
-            previous_history.append(types.Content(role = "user",parts=[types.Part.from_bytes(data=image_bytes, mime_type=message.image_mime_type)]))
+        if message.image_details.image_url and message.image_details.image_mime_type:
+            image_bytes = requests.get(message.image_details.image_url).content
+            previous_history.append(types.Content(role = "user",parts=[types.Part.from_bytes(data=image_bytes, mime_type=message.image_details.image_mime_type)]))
         previous_history.append(
             types.Content(role="model", parts=[types.Part.from_text(text=message.answer)])
         )

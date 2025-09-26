@@ -2,13 +2,17 @@ from typing import Annotated, Optional, List
 from datetime import datetime
 
 from beanie import Document, Indexed, Link
-from pydantic import Field
+from pydantic import Field, BaseModel
 
+
+class ImageDetails(BaseModel):
+    image_id: Optional[str] = None 
+    image_url: Optional[str] = None
+    image_mime_type: Optional[str] = None
 
 class Message(Document):
     question: str
-    image_url: Optional[str] = None
-    image_mime_type: Optional[str] = None
+    image_details: ImageDetails
     answer: str
     thought_summary: str = ""
     video_url: str | None = None
