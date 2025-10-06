@@ -1,3 +1,4 @@
+from beanie.operators import In, Set
 from server.models.user import Message, User, Conversation, ImageDetails
 from server.utils.util import generate_conversation_title
 
@@ -32,6 +33,7 @@ async def add_generated_response_to_memory(generated_content, link, question,
             conversation.title = generate_conversation_title(question,generated_content)
         conversation.updated_at = new_message.created_at
         await conversation.save()
+    return new_message
 
 async def get_conversations_by_user(user: User):
     conversations = await Conversation.find(Conversation.user.id == user.id, Conversation.is_deleted == False).to_list()
@@ -46,3 +48,16 @@ async def change_conversation_title(conversation: Conversation, new_title: str):
     conversation.title = new_title
     await conversation.save()
     return {"status":True}
+
+async def record_message_rating(message_id, rating):
+    message = await Message.find(Message.id == message_id).first_or_none()
+    if not message:
+        return False
+    message.rating = rating if rating != "NULL" else None
+    await message.save()
+    return True
+
+async def clear_conversation_messages(user_history):
+    messages_ids = [message.id for message in user_history.messages]
+    await Message.find(In(Message.id, messages_ids)).update(Set({Message.is_cleared: True}))
+    return True

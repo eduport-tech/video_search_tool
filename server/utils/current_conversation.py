@@ -10,7 +10,7 @@ class CurrentConversation(BaseModel):
     conversation: Conversation | None = Field(description="Conversation Document Item")
 
 async def current_conversation(
-        x_user_id: str | None = Header(None),
+        x_user_id: str = Header(...),
         conversation_id: str = None,
         x_is_premium: bool | None = Header(False),
 ):
