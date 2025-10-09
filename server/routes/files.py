@@ -27,8 +27,11 @@ async def image_upload(file: UploadFile = File(...),
         file_name=file.filename
     )
     if response["status"] == "error":
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=response["message"])
+        status_code = response.get("code")
+        raise HTTPException(
+            status_code=status_code,
+            detail=response["message"]
+            )
     return response
 
 @router.get("/uploaded_images/{file_id}", response_model=ImageDetailsResponse)

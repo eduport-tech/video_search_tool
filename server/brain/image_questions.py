@@ -2,7 +2,9 @@ from uuid import uuid4
 import os
 import requests
 from google.genai import types
+from fastapi import status
 
+from server.config import CONFIG
 from server.brain.core_llms import gemini_client
 from server.utils.image_processing import save_image_details, save_image_to_r2
 from server.utils.current_conversation import CurrentConversation
@@ -23,6 +25,9 @@ async def save_uploaded_image(image_file, user_id, file_name):
             contents=[types.Content(role="user", parts=[types.Part.from_bytes(data=content, mime_type=mime_type)])],
         )
         token_usage = token_count.total_tokens
+        if token_usage > CONFIG.max_image_tokens:
+            logger.error(msg=f"The given image has crossed the token limit. EPSID:{user_id}->ImageToken:{token_usage}")
+            return {"status": "error", "message": "Image size is too large.", "code": status.HTTP_413_REQUEST_ENTITY_TOO_LARGE}
         
         file_id = await save_image_details(content, user_id, file_name, url, mime_type, token_usage)
         
@@ -30,7 +35,7 @@ async def save_uploaded_image(image_file, user_id, file_name):
         
     except Exception as e:
         logger.error(f"Error saving uploaded image: {e}")
-        return {"status": "error", "message": "Failed to save image."}
+        return {"status": "error", "message": "Failed to save image.", "code": status.HTTP_500_INTERNAL_SERVER_ERROR}
     
 async def generate_prompt_contents(
     question: str,
@@ -62,7 +67,7 @@ async def generate_prompt_contents(
     <OUTPUT_FORMAT>
     The output format must be
     1. Primarily markdown (.md)
-    2. Mathematical and other expressions should be in latex
+    2. Mathematical and other expressions should be in latex(inside $$)
     </OUTPUT_FORMAT>
 
     <RECAP>
@@ -90,20 +95,29 @@ async def generate_image_history_summary(user_history: CurrentConversation = Non
         )
     return previous_history
 
+def gemini_config(model_name: str, sys_instruction: str):
+    if model_name == "gemini-2.0-flash":
+        return types.GenerateContentConfig(
+            system_instruction=sys_instruction,
+            temperature = 0.0,
+        )
+    return types.GenerateContentConfig(
+        system_instruction=sys_instruction,
+        temperature = 0.0,
+        thinking_config=types.ThinkingConfig(include_thoughts=True,thinking_budget=5000),
+        max_output_tokens=10000,
+    )
+
 async def generate_gemini_response(sys_instruction: str, contents: list):
     """
     Generate a response using the Gemini model.
     """
     try:
+        model_name = CONFIG.gemini_model_name
         response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=model_name,
             contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=sys_instruction,
-                temperature = 0.0,
-                thinking_config=types.ThinkingConfig(include_thoughts=True,thinking_budget=5000),
-                max_output_tokens=10000,
-            )
+            config=gemini_config(model_name, sys_instruction),
         )
         answer = None
         thought = ""
@@ -117,5 +131,5 @@ async def generate_gemini_response(sys_instruction: str, contents: list):
         return answer, thought, response.usage_metadata.total_token_count
     except Exception as e:
         logger.error(f"Error generating Gemini response: {e}")
-        return None
+        return None, "", 0
     
