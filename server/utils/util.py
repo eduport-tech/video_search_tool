@@ -1,3 +1,5 @@
+from redis.asyncio import Redis
+
 from server.brain.chains import (
     validation_chain,
     main_chat_chain,
@@ -279,6 +281,7 @@ async def generate_image_response(
     user_history: CurrentConversation = None,
     video_id: str = None,
     course_name: str = "",
+    redis: Redis = None,
 ):
     with get_openai_callback() as cb:
         generated_content, link = None, None
@@ -299,6 +302,7 @@ async def generate_image_response(
                     user_history = user_history,
                     video_id = video_id,
                     course_name=course_name,
+                    redis=redis,
                 )
                 cb.total_tokens = total_token
             case _:
@@ -312,6 +316,7 @@ async def generate_image_study_response(
     user_history: CurrentConversation = None,
     video_id: str = None,
     course_name: str = "",
+    redis: Redis = None,
 ):
     context = ""
     link = None
@@ -338,6 +343,8 @@ async def generate_image_study_response(
         image_url=image_url,
         image_mime_type=image_mime_type,
         previous_history=previous_history,
+        course_name=course_name,
+        redis=redis,
     )
     generated_content, thought,total_token = await generate_gemini_response(sys_instruction, contents)
     return generated_content, thought, total_token, link

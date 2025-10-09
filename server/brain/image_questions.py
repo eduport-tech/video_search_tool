@@ -3,6 +3,7 @@ import os
 import requests
 from google.genai import types
 from fastapi import status
+from redis.asyncio import Redis
 
 from server.config import CONFIG
 from server.brain.core_llms import gemini_client
@@ -41,11 +42,15 @@ async def generate_prompt_contents(
     question: str,
     image_url: str | None = None,
     image_mime_type: str | None = None,
-    previous_history: list = None,):
-    sys_instruction = """
+    previous_history: list = None,
+    course_name: str = "",
+    redis: Redis = None,
+):
+    class_name = await redis.hget(name=f"course_{course_name}",key="class")
+    sys_instruction = f"""
     <OBJECTIVE_AND_PERSONA>
     You are a doubt clearance assistant developed by Eduport.
-    Your task is to help students to clear academic doubts and answer questions.
+    Your task is to help a student of {class_name}, to clear academic doubts and answer questions.
     </OBJECTIVE_AND_PERSONA>
 
     <INSTRUCTIONS>
@@ -67,11 +72,11 @@ async def generate_prompt_contents(
     <OUTPUT_FORMAT>
     The output format must be
     1. Primarily markdown (.md)
-    2. Mathematical and other expressions should be in latex(inside $$)
+    2. Mathematical and other expressions should be in latex(inside '$')
     </OUTPUT_FORMAT>
 
     <RECAP>
-    Re-emphasize the key aspects of the prompt, adhere to the instructions, especially the constraints, output format, etc.
+    Re-emphasize the key aspects of the prompt, adhere to the instructions, be strict to the constraints, output format, etc.
     </RECAP>
     """
     if question == "": question = "answer"

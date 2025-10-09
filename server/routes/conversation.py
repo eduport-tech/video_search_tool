@@ -25,6 +25,7 @@ from server.models.conversation import (ChatResponse,
                                         ChatRequest,
                                         MessageRatingResponse,
                                         ConversationRenameResponse)
+from server.services.redis import redis_dep
 
 
 router = APIRouter(tags=["Conversation"])
@@ -35,6 +36,7 @@ async def doubt_clearance_chat(
     chat_request: ChatRequest,
     current_user: CurrentUser = Depends(current_conversation_user),
     current_conversation: CurrentConversation = Depends(current_conversation),
+    redis = Depends(redis_dep),
 ):
     image_url, image_mime_type = None, None
     if chat_request.image_id:
@@ -42,12 +44,13 @@ async def doubt_clearance_chat(
         image_url = image.url
         image_mime_type = image.mime_type
     generated_content, thought, link, total_token = await generate_image_response(
-        chat_request.question,
-        image_url=image_url,
-        image_mime_type=image_mime_type,
-        user_history=current_conversation,
-        course_name=chat_request.course_name,
-    )
+            chat_request.question,
+            image_url=image_url,
+            image_mime_type=image_mime_type,
+            user_history=current_conversation,
+            course_name=chat_request.course_name,
+            redis=redis,
+        )
     if generated_content:
         if not current_conversation.conversation:
             current_conversation.conversation = await create_conversation(user=current_user)

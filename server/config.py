@@ -33,6 +33,7 @@ class Settings(BaseModel):
     r2_bucket_name: str = config("R2_BUCKET_NAME")
     r2_image_bucket_name: str = config("R2_IMAGE_BUCKET_NAME", default="user_images")
     r2_public_url: str = config("R2_PUBLIC_URL")
-
+    redis_host: str = config("REDIS_HOST", default="localhost")
+    redis_port: int = int(config("REDIS_PORT", default=6379))
 
 CONFIG = Settings()
