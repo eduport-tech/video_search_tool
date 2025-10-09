@@ -11,9 +11,8 @@ from fastapi import (APIRouter,
 
 from server.utils.util import generate_response
 from server.brain.transcription import generate_transcription_data
-from server.utils.current_user import current_user
+from server.utils.current_user import current_user, CurrentUserResponse
 from server.utils.memory_utils import add_generated_response_to_memory
-from server.utils.current_user import CurrentUserResponse
 
 
 router = APIRouter(tags=["Doubt Clearance"])
