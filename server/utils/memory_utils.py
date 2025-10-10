@@ -36,7 +36,14 @@ async def add_generated_response_to_memory(generated_content, link, question,
     return new_message
 
 async def get_conversations_by_user(user: User):
-    conversations = await Conversation.find(Conversation.user.id == user.id, Conversation.is_deleted == False).to_list()
+    conversations = (
+        await Conversation.find(
+            Conversation.user.id == user.id,
+            Conversation.is_deleted == False,
+            )
+        .sort(-Conversation.updated_at)
+        .to_list()
+    )
     return conversations
 
 async def delete_conversation_by_id(conversation: Conversation):
