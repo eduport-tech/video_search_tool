@@ -21,7 +21,7 @@ class Message(Document):
     is_cleared: bool = False
     rating: Literal["LIKE", "DISLIKE", None] = None
     created_at: datetime = Field(default_factory=datetime.now)
-    conversation: Link["Conversation"]
+    conversation: Optional[Link["Conversation"]] = None
     user: Link["User"] = Field(original_field="messages")
 
 class Conversation(Document):
