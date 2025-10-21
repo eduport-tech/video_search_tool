@@ -343,6 +343,9 @@ async def generate_image_study_response(
     return generated_content, thought, total_token, link
 
 def generate_conversation_title(question: str, response: str):
-    words = response.split()
+    if question:    
+        words = question.split()
+    else : 
+        words = response.split()
     title = ' '.join(words[:5])
     return title

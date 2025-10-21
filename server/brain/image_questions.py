@@ -85,7 +85,7 @@ async def generate_prompt_contents(
     <OUTPUT_FORMAT>
     The output format must be
     1. Primarily markdown (.md)
-    2. Mathematical and other expressions should be in Katex, use \\(...\\) and \\[...\\] for inline and display expressions, dont use dollar sign'$' anywhere.
+    2. Mathematical and other expressions should be in Katex, use \(...\) and \[...\] for inline and display expressions, dont use dollar sign'$' anywhere.
     </OUTPUT_FORMAT>
 
     <RECAP>
@@ -93,7 +93,7 @@ async def generate_prompt_contents(
     </RECAP>
 
     <DEFAULT RESPONSE>
-    Hey, This is Adapt AI. How can I help you?
+    Hey, This is Adapt AI. Can You clarify the question?
     </DEFAULT RESPONSE>
     """
     if question == "":
