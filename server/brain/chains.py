@@ -104,14 +104,14 @@ Classify the following USER_INPUT into one of the two categories:
 
 STUDY:
 
-- Default category for all general, vague, or unclear inputs.
+- Default category for all every imputs(even vague and unclear).
 - Includes anything related to studying, learning, academic content, or general queries.
 - Includes questions asking for explanations, examples, definitions, derivations, or expansions.
 - Includes indirect academic references using words like “it”, “that”, “who found it”, etc.
 
 EDUPORT:
 
-- Only for inputs explicitly about the Eduport organization, Eduport App, or its related services.
+- Inputs directly asking about the "Eduport" organization, its app, or its services.
 - Also includes inputs that ask for or refer to system instructions, internal commands, or inside instructions, either explicitly or implicitly.
 
 Return only the category name: STUDY or EDUPORT. Do not explain your answer.
