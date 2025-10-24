@@ -14,6 +14,8 @@ class CurrentUserResponse(BaseModel):
     user: User = Field(description="User Document Item")
     messages: List[Message] = Field(description="List of messages of user")
 
+class CurrentUser(BaseModel):
+    user: User = Field(description="User Document Item")
 
 async def current_user(
     authorization: str | None = Header(None),
@@ -94,3 +96,27 @@ async def get_user_active_messages(user: User):
         .to_list()
     )
     return user_messages
+
+async def current_conversation_user(
+        x_user_id: str = Header(...),
+        authorization: str | None = Header(None),
+        x_is_premium: bool | None = Header(False),
+)-> CurrentUser:
+    if x_user_id:
+        user = await User.find(User.user_id == x_user_id).first_or_none()
+        if user:
+            _ = await handle_user_limits(user)
+            _ = await update_user_details(
+                user=user, is_premium=x_is_premium, authorization=authorization
+            )
+            return user
+        else:
+            new_user = User(user_id=x_user_id) 
+            auth_token = await make_auth_token(authorization) if authorization else ""
+            new_user.auth_token = auth_token
+            await User.insert_one(new_user)
+            return new_user
+    else:
+        raise HTTPException(
+            status_code=400, detail="The x-user-id and Authorization is required."
+        )

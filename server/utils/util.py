@@ -10,7 +10,11 @@ from server.brain.chains import (
 )
 from server.brain.vector_db import cloud_embed_col
 from server.utils.current_user import CurrentUserResponse
+from server.utils.current_conversation import CurrentConversation
 from langchain_community.callbacks.manager import get_openai_callback
+from server.brain.image_questions import (generate_image_history_summary,
+                                        generate_gemini_response,
+                                        generate_prompt_contents)
 
 
 def select_best_context(results, question):
@@ -150,7 +154,7 @@ def generate_general_response(question):
 
 
 def generate_eduport_response(question):
-    response = eduport_category_chain.invoke({"user_input": question})
+    response = eduport_category_chain.stream({"user_input": question})
     return response, None
 
 
@@ -267,3 +271,80 @@ def generate_response(
             case _:
                 generated_content, link = generate_general_response(question)
         return generated_content, link, cb.total_tokens
+
+async def generate_image_response(
+    question,
+    image_url: str | None = None,
+    image_mime_type: str | None = None,
+    user_history: CurrentConversation = None,
+    video_id: str = None,
+    course_name: str = "",
+):
+    with get_openai_callback() as cb:
+        generated_content, link = None, None
+        validated_category = validation_category_chain.invoke(
+            {"user_input": question}
+        ).rstrip()
+        match validated_category:
+            case "GENERAL":
+                generated_content, link = generate_general_response(question)
+            case "EDUPORT":
+                generated_content, link = generate_eduport_response(question)
+            case "STUDY":
+                generated_content, link = await generate_image_study_response(
+                    question,
+                    image_url=image_url,
+                    image_mime_type=image_mime_type,
+                    user_history = user_history,
+                    video_id = video_id,
+                    course_name=course_name,
+                )
+                cb.total_tokens = -1
+            case _:
+                generated_content, link = generate_general_response(question)
+        return generated_content, link, cb.total_tokens
+
+async def generate_image_study_response(
+    question,
+    image_url: str | None = None,
+    image_mime_type: str | None = None,
+    user_history: CurrentConversation = None,
+    video_id: str = None,
+    course_name: str = "",
+):
+    context = ""
+    link = None
+    search_query = None
+    previous_history = await generate_image_history_summary(user_history)
+    is_video_search = search_query_chain.invoke({"question": question}).rstrip()
+    if is_video_search == "YES":
+        if video_id:
+            video_topic = find_video_topic(question, video_id)
+            if video_topic:
+                search_query = {"topic": video_topic}
+        if not search_query:
+            if course_name:
+                search_query = {"course_name": course_name}
+        context = cloud_embed_col.query(
+            query_texts=question, where=search_query, n_results=10
+        )
+        processed_data = search_for_timestamp(context) if context else None
+        if processed_data:
+            context, link = generate_context_response(processed_data, question)
+
+    sys_instruction, contents = await generate_prompt_contents(
+        question=question,
+        image_url=image_url,
+        image_mime_type=image_mime_type,
+        previous_history=previous_history,
+    )
+    response = await generate_gemini_response(sys_instruction, contents)
+    return response, link
+
+def generate_conversation_title(question: str, response: str):
+    if question:    
+        words = question.split()
+    else : 
+        words = response.split()
+    title = ' '.join(words[:5])
+    return title
