@@ -161,7 +161,7 @@ def gemini_config(model_name: str, sys_instruction: str):
         system_instruction=sys_instruction,
         temperature=0.0,
         thinking_config=types.ThinkingConfig(
-            include_thoughts=True, thinking_budget=5000
+            thinking_budget=5000
         ),
         max_output_tokens=10000,
     )
@@ -173,21 +173,12 @@ async def generate_gemini_response(sys_instruction: str, contents: list):
     """
     try:
         model_name = CONFIG.gemini_model_name
-        response = gemini_client.models.generate_content(
+        response = gemini_client.models.generate_content_stream(
             model=model_name,
             contents=contents,
             config=gemini_config(model_name, sys_instruction),
         )
-        answer = None
-        thought = ""
-        for part in response.candidates[0].content.parts:
-            if not part.text:
-                continue
-            if part.thought:
-                thought = part.text
-            else:
-                answer = part.text
-        return answer, thought, response.usage_metadata.total_token_count
+        return response
     except Exception as e:
         logger.error(f"Error generating Gemini response: {e}")
-        return None, "", 0
+        return None

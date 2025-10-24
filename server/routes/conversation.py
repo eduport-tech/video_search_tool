@@ -6,8 +6,10 @@ from fastapi import (
     HTTPException,
     status,
 )
+from fastapi.responses import StreamingResponse
 from beanie import PydanticObjectId
 from typing import Literal
+import json
 
 from server.utils.util import generate_image_response
 from server.utils.current_user import current_conversation_user, CurrentUser
@@ -24,9 +26,9 @@ from server.utils.memory_utils import (
     record_message_rating,
     clear_conversation_messages,
 )
+from typing import AsyncGenerator
 from server.utils.image_processing import get_image_url
 from server.models.conversation import (
-    ChatResponse,
     ConversationMessagesResponse,
     ConversationsListResponse,
     DeleteConversationResponse,
@@ -40,7 +42,7 @@ from server.models.conversation import (
 router = APIRouter(tags=["Conversation"])
 
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post("/chat")
 async def doubt_clearance_chat(
     chat_request: ChatRequest,
     current_user: CurrentUser = Depends(current_conversation_user),
@@ -51,41 +53,58 @@ async def doubt_clearance_chat(
         image = await get_image_url(chat_request.image_id)
         image_url = image.url
         image_mime_type = image.mime_type
-    generated_content, thought, link, total_token = await generate_image_response(
+    generated_content, link, total_token = await generate_image_response(
         chat_request.question,
         image_url=image_url,
         image_mime_type=image_mime_type,
         user_history=current_conversation,
         course_name=chat_request.course_name,
     )
-    if generated_content:
-        if not current_conversation.conversation:
-            current_conversation.conversation = await create_conversation(
-                user=current_user
+    if not generated_content:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Failed to generate response.")
+
+    async def stream_generator(total_token=total_token) -> AsyncGenerator[str, None]:
+        full_answer = ""
+        if total_token==-1:
+            for chunk in generated_content:
+                text_chunk = chunk.text
+                full_answer += text_chunk
+                if chunk.usage_metadata:
+                    total_token = chunk.usage_metadata.total_token_count
+                yield f"event: message\ndata: {text_chunk}\n\n"
+        else:
+            for chunk in generated_content:
+                full_answer += chunk
+                yield f"event: message\ndata: {chunk}\n\n"
+
+        try:
+            if not current_conversation.conversation:
+                current_conversation.conversation = await create_conversation(
+                    user=current_user
+                )
+            message = await add_generated_response_to_memory(
+                full_answer,
+                link,
+                chat_request.question,
+                current_user,
+                total_token_used=total_token,
+                conversation=current_conversation.conversation,
+                image_id=chat_request.image_id,
+                image_url=image_url,
+                image_mime_type=image_mime_type,
+                thought_summary="",
             )
-        message = await add_generated_response_to_memory(
-            generated_content,
-            link,
-            chat_request.question,
-            current_user,
-            total_token,
-            conversation=current_conversation.conversation,
-            image_id=chat_request.image_id,
-            image_url=image_url,
-            image_mime_type=image_mime_type,
-            thought_summary=thought,
-        )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate response.",
-        )
-    return {
-        "content": generated_content,
-        "link": link,
-        "message_id": str(message.id),
-        "conversation_id": str(current_conversation.conversation.id),
-    }
+            final_metadata = {
+                "message_id": str(message.id),
+                "conversation_id": str(current_conversation.conversation.id),
+                "link": link
+            }
+            yield f"event: end\ndata: {json.dumps(final_metadata)}\n\n"
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to save response.")
+
+    return StreamingResponse(stream_generator(), media_type="text/event-stream")
 
 
 @router.get(

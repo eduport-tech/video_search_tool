@@ -154,7 +154,7 @@ def generate_general_response(question):
 
 
 def generate_eduport_response(question):
-    response = eduport_category_chain.invoke({"user_input": question})
+    response = eduport_category_chain.stream({"user_input": question})
     return response, None
 
 
@@ -285,14 +285,13 @@ async def generate_image_response(
         validated_category = validation_category_chain.invoke(
             {"user_input": question}
         ).rstrip()
-        thought = ""
         match validated_category:
             case "GENERAL":
                 generated_content, link = generate_general_response(question)
             case "EDUPORT":
                 generated_content, link = generate_eduport_response(question)
             case "STUDY":
-                generated_content, thought, total_token, link = await generate_image_study_response(
+                generated_content, link = await generate_image_study_response(
                     question,
                     image_url=image_url,
                     image_mime_type=image_mime_type,
@@ -300,10 +299,10 @@ async def generate_image_response(
                     video_id = video_id,
                     course_name=course_name,
                 )
-                cb.total_tokens = total_token
+                cb.total_tokens = -1
             case _:
                 generated_content, link = generate_general_response(question)
-        return generated_content, thought, link, cb.total_tokens
+        return generated_content, link, cb.total_tokens
 
 async def generate_image_study_response(
     question,
@@ -339,8 +338,8 @@ async def generate_image_study_response(
         image_mime_type=image_mime_type,
         previous_history=previous_history,
     )
-    generated_content, thought,total_token = await generate_gemini_response(sys_instruction, contents)
-    return generated_content, thought, total_token, link
+    response = await generate_gemini_response(sys_instruction, contents)
+    return response, link
 
 def generate_conversation_title(question: str, response: str):
     if question:    
