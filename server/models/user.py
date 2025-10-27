@@ -1,18 +1,27 @@
-from typing import Annotated, Optional, List
+from typing import Annotated, Optional, List, Literal
 from datetime import datetime
 
-from beanie import Document, Indexed, Link
-from pydantic import Field
+from beanie import Document, Indexed, Link, PydanticObjectId
+from pydantic import Field, BaseModel
 
+
+class ImageDetails(BaseModel):
+    image_id: Optional[str] = None 
+    image_url: Optional[str] = None
+    image_mime_type: Optional[str] = None
 
 class Message(Document):
+    id: PydanticObjectId = Field(default_factory=PydanticObjectId, alias="_id")
     question: str
+    image_details: Optional[ImageDetails] = None
     answer: str
+    thought_summary: str = ""
     video_url: str | None = None
     token_count: int = 0
     is_cleared: bool = False
+    rating: Literal["LIKE", "DISLIKE", None] = None
     created_at: datetime = Field(default_factory=datetime.now)
-    conversation: Link["Conversation"]
+    conversation: Optional[Link["Conversation"]] = None
     user: Link["User"] = Field(original_field="messages")
 
 class Conversation(Document):
@@ -45,6 +54,7 @@ class ImageData(Document):
     file_size: int = 0
     width: Optional[int] = None
     height: Optional[int] = None
+    token_usage: int = 0
     created_at: datetime = Field(default_factory=datetime.now)
     user: Link["User"] = Field(original_field="images")
 
