@@ -12,7 +12,6 @@ from server.config import CONFIG
 
 class CurrentUserResponse(BaseModel):
     user: User = Field(description="User Document Item")
-    messages: List[Message] = Field(description="List of messages of user")
 
 class CurrentUser(BaseModel):
     user: User = Field(description="User Document Item")
@@ -29,14 +28,13 @@ async def current_user(
             _ = await update_user_details(
                 user=user, is_premium=x_is_premium, authorization=authorization
             )
-            user_messages = await get_user_active_messages(user)
-            return CurrentUserResponse(user=user, messages=user_messages)
+            return CurrentUserResponse(user=user)
         else:
             starting_history = User(user_id=x_user_id)
             auth_token = await make_auth_token(authorization) if authorization else ""
             starting_history.auth_token = auth_token
             await User.insert_one(starting_history)
-            return CurrentUserResponse(user=starting_history, messages=[])
+            return CurrentUserResponse(user=starting_history)
     else:
         raise HTTPException(
             status_code=400, detail="The x-user-id and Authorization is required."

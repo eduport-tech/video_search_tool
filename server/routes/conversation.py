@@ -90,7 +90,6 @@ async def doubt_clearance_chat(
 
 @router.get(
     "/conversation/{conversation_id}",
-    dependencies=[Depends(current_conversation_user)],
     response_model=ConversationMessagesResponse,
 )
 async def get_conversation(
@@ -112,7 +111,6 @@ async def get_all_conversations(
 
 @router.delete(
     "/conversation/{conversation_id}",
-    dependencies=[Depends(current_conversation_user)],
     response_model=DeleteConversationResponse,
 )
 async def delete_conversation(
@@ -130,7 +128,6 @@ async def delete_conversation(
 
 @router.patch(
     "/conversation/clear/{conversation_id}",
-    dependencies=[Depends(current_conversation_user)],
     response_model=ConversationClearResponse,
 )
 async def clear_conversation(
@@ -148,7 +145,6 @@ async def clear_conversation(
 
 @router.patch(
     "/conversation/rename/{conversation_id}",
-    dependencies=[Depends(current_conversation_user)],
     response_model=ConversationRenameResponse,
 )
 async def rename_conversation(
@@ -165,7 +161,6 @@ async def rename_conversation(
 
 @router.post(
     "/message-rating",
-    dependencies=[Depends(current_conversation_user)],
     response_model=MessageRatingResponse,
 )
 async def post_message_rating(
