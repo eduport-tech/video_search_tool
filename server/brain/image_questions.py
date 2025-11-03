@@ -2,7 +2,7 @@ from uuid import uuid4
 import os
 import requests
 from google.genai import types
-from fastapi import status
+from fastapi import status, HTTPException
 
 from server.config import CONFIG
 from server.brain.core_llms import gemini_client
@@ -179,8 +179,15 @@ async def generate_gemini_response(sys_instruction: str, contents: list):
             contents=contents,
             config=gemini_config(model_name, sys_instruction),
         )
-        answer = None
-        thought = ""
+    except Exception as e:
+        logger.error(f"Error generating Gemini response: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error generating Gemini response.",
+        )
+    answer = None
+    thought = ""
+    if response.candidates:
         for part in response.candidates[0].content.parts:
             if not part.text:
                 continue
@@ -189,6 +196,9 @@ async def generate_gemini_response(sys_instruction: str, contents: list):
             else:
                 answer = part.text
         return answer, thought, response.usage_metadata.total_token_count
-    except Exception as e:
-        logger.error(f"Error generating Gemini response: {e}")
-        return None, "", 0
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No response candidates generated.",
+        )
+    
