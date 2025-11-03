@@ -31,8 +31,7 @@ async def get_conversation_messages(conversation_id: str, user: User):
     conversation_messages = (
         await Message.find(
             Message.conversation.id == ObjectId(conversation_id),
-            Message.is_cleared == False, 
-            Message.user.id == user.id 
+            Message.is_cleared == False,
             )
         .sort(-Message.created_at)
         .to_list()
