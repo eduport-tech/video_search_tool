@@ -8,6 +8,8 @@ import sentry_sdk
 
 from server.config import CONFIG
 from server.models.user import User, Message, AudioData, ImageData, Conversation
+from server.models.motivation import Motivation
+from server.services.redis import create_redis_client
 
 if CONFIG.environment == "PROD":
     sentry_sdk.init(
@@ -31,9 +33,11 @@ It supports:
 async def lifespan(app: FastAPI):
     """Initialize application service"""
     app.db = AsyncIOMotorClient(CONFIG.mongo_uri).doubt_clearance
-    await init_beanie(app.db, document_models=[User, Message, AudioData, ImageData, Conversation])
+    await init_beanie(app.db, document_models=[User, Message, AudioData, ImageData, Conversation, Motivation])
+    app.state.redis = create_redis_client()
     print("Startup Complete")
     yield
+    await app.state.redis.close()
     print("Shutdown complete")
 
 app = FastAPI(

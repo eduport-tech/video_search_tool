@@ -2,10 +2,11 @@ from uuid import uuid4
 import os
 import requests
 from google.genai import types
-from fastapi import status
+from fastapi import status, HTTPException
 
 from server.config import CONFIG
 from server.brain.core_llms import gemini_client
+from server.brain.tools import tools
 from server.utils.image_processing import save_image_details, save_image_to_r2
 from server.utils.current_conversation import CurrentConversation
 
@@ -74,6 +75,8 @@ async def generate_prompt_contents(
     1. Provide step by step solution if needed, if the input is a problem question.
     2. Analyze the question values and requirements carefully first and ensure your response is relevant and accurate.
     3. If the user asks in Malayalam, provide the final answer completely in Malayalam.
+    4. For empty questions repond with - Hey, how can I help you with your studies today?
+    5. Always go through tool call - get_motivational_content for motivation requests, and respond with motivating quote.
     </INSTRUCTIONS>
 
     <CONSTRAINTS>
@@ -92,10 +95,6 @@ async def generate_prompt_contents(
     <RECAP>
     Re-emphasize the key aspects of the prompt, adhere to the instructions, especially the constraints, output format, etc.
     </RECAP>
-
-    <DEFAULT RESPONSE>
-    Hey, how can I help you with your studies today?
-    </DEFAULT RESPONSE>
     """
     if question == "":
         question = "answer"
@@ -157,6 +156,7 @@ def gemini_config(model_name: str, sys_instruction: str):
         return types.GenerateContentConfig(
             system_instruction=sys_instruction,
             temperature=0.0,
+            tools=tools,
         )
     return types.GenerateContentConfig(
         system_instruction=sys_instruction,
@@ -179,16 +179,10 @@ async def generate_gemini_response(sys_instruction: str, contents: list):
             contents=contents,
             config=gemini_config(model_name, sys_instruction),
         )
-        answer = None
-        thought = ""
-        for part in response.candidates[0].content.parts:
-            if not part.text:
-                continue
-            if part.thought:
-                thought = part.text
-            else:
-                answer = part.text
-        return answer, thought, response.usage_metadata.total_token_count
     except Exception as e:
         logger.error(f"Error generating Gemini response: {e}")
-        return None, "", 0
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error generating Gemini response.",
+        )
+    return response
