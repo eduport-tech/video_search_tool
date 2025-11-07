@@ -1,3 +1,4 @@
+from fastapi import status, HTTPException
 from server.brain.chains import (
     validation_chain,
     main_chat_chain,
@@ -15,6 +16,8 @@ from langchain_community.callbacks.manager import get_openai_callback
 from server.brain.image_questions import (generate_image_history_summary,
                                         generate_gemini_response,
                                         generate_prompt_contents)
+from server.models.motivation import Motivation
+from redis.asyncio import Redis
 
 
 def select_best_context(results, question):
@@ -279,6 +282,7 @@ async def generate_image_response(
     user_history: CurrentConversation = None,
     video_id: str = None,
     course_name: str = "",
+    redis: Redis = None,
 ):
     with get_openai_callback() as cb:
         generated_content, link = None, None
@@ -299,11 +303,32 @@ async def generate_image_response(
                     user_history = user_history,
                     video_id = video_id,
                     course_name=course_name,
+                    redis=redis,
                 )
                 cb.total_tokens = total_token
             case _:
                 generated_content, link = generate_general_response(question)
         return generated_content, thought, link, cb.total_tokens
+
+async def generate_motivation_response(course_name: str,redis: Redis):
+    class_name = await redis.hget(name=f"course_{course_name}",key="class")
+    if class_name:
+        pipeline = [
+            {"$match": {"class_name": {"$in": [class_name, "DEFAULT"]}}},
+            {"$sample": {"size": 1}}]
+    else: 
+        pipeline = [
+            {"$match": {"class_name": "DEFAULT"}},
+            {"$sample": {"size": 1}}]
+    collection = Motivation.get_motor_collection()
+    cursor = collection.aggregate(pipeline)
+    docs = [doc async for doc in cursor]
+
+    if docs:
+        video_url = docs[0].get("video_url")
+        return video_url
+    else:
+        return None
 
 async def generate_image_study_response(
     question,
@@ -312,9 +337,10 @@ async def generate_image_study_response(
     user_history: CurrentConversation = None,
     video_id: str = None,
     course_name: str = "",
+    redis: Redis = None,
 ):
     context = ""
-    link = None
+    topic_video_link = None
     search_query = None
     previous_history = await generate_image_history_summary(user_history)
     is_video_search = search_query_chain.invoke({"question": question}).rstrip()
@@ -331,7 +357,7 @@ async def generate_image_study_response(
         )
         processed_data = search_for_timestamp(context) if context else None
         if processed_data:
-            context, link = generate_context_response(processed_data, question)
+            context, topic_video_link = generate_context_response(processed_data, question)
 
     sys_instruction, contents = await generate_prompt_contents(
         question=question,
@@ -339,8 +365,48 @@ async def generate_image_study_response(
         image_mime_type=image_mime_type,
         previous_history=previous_history,
     )
-    generated_content, thought,total_token = await generate_gemini_response(sys_instruction, contents)
-    return generated_content, thought, total_token, link
+    response = await generate_gemini_response(sys_instruction, contents)
+    answer, thought, token_count, motivation_video_link = await parse_gemini_output(response, course_name, redis)
+    if motivation_video_link:
+        link = motivation_video_link
+    else:
+        link = topic_video_link
+
+    return answer, thought, token_count, link
+
+async def parse_gemini_output(response, course_name: str, redis: Redis):
+    """
+    Parses the Gemini model's response to extract the answer, thought,
+    and handle any automatic function calls.
+    """
+    answer = None
+    thought = "" 
+    link = None
+
+    if not response.candidates:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No response candidates generated.",
+        )
+
+    candidate = response.candidates[0]
+    for part in candidate.content.parts:
+        if not part.text:
+            continue
+        if part.thought:
+            thought = part.text
+        else:
+            answer = part.text
+
+    if response.automatic_function_calling_history:
+        for history_part in response.automatic_function_calling_history:
+            if history_part.parts[0].function_call:
+                function_call = history_part.parts[0].function_call
+                if function_call.name == "get_motivational_content":
+                    link = await generate_motivation_response(course_name, redis)
+                break
+
+    return answer, thought, response.usage_metadata.total_token_count, link
 
 def generate_conversation_title(question: str, response: str):
     if question:    
